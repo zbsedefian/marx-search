@@ -362,10 +362,21 @@ def search(
     }
 
 @app.get("/parts_with_chapters_sections")
-def get_parts_with_chapters_sections(db: Session = Depends(get_db)):
+def get_parts_with_chapters_sections(
+    work_id: int | None = Query(None),
+    db: Session = Depends(get_db),
+):
     parts = db.query(models.Part).order_by(models.Part.number).all()
-    chapters = db.query(models.Chapter).order_by(models.Chapter.id).all()
-    sections = db.query(models.Section).all()
+
+    chapters_query = db.query(models.Chapter)
+    if work_id is not None:
+        chapters_query = chapters_query.filter(models.Chapter.work_id == work_id)
+    chapters = chapters_query.order_by(models.Chapter.id).all()
+
+    sections_query = db.query(models.Section)
+    if work_id is not None:
+        sections_query = sections_query.filter(models.Section.work_id == work_id)
+    sections = sections_query.all()
 
     # Map sections to chapters
     section_map = {}
@@ -388,11 +399,12 @@ def get_parts_with_chapters_sections(db: Session = Depends(get_db)):
             if part.start_chapter <= ch.id <= part.end_chapter
         ]
 
-        result.append({
-            "number": part.number,
-            "title": part.title,
-            "chapters": part_chapters
-        })
+        if part_chapters:
+            result.append({
+                "number": part.number,
+                "title": part.title,
+                "chapters": part_chapters
+            })
 
     return result
 

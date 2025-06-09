@@ -1,30 +1,26 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { WorkContext } from "./work/WorkContext";
 
-export default function Home() {
+export default function TableOfContents({ workId }) {
   const [parts, setParts] = useState([]);
-  const { works, currentWorkId } = useContext(WorkContext);
-  const currentWork = works.find((w) => w.id === currentWorkId);
 
   useEffect(() => {
-    fetch("http://localhost:8000/parts_with_chapters_sections")
+    const url = new URL("http://localhost:8000/parts_with_chapters_sections");
+    if (workId) {
+      url.searchParams.set("work_id", workId);
+    }
+    fetch(url)
       .then((res) => res.json())
       .then(setParts);
-  }, [currentWorkId]);
+  }, [workId]);
 
   return (
-    <div className="p-6 bg-[#fceedd] dark:bg-[#1e1e1e] min-h-screen text-gray-800 dark:text-gray-200 font-serif">
-      <h1 className="text-3xl font-bold mb-8">
-        {currentWork ? currentWork.title : "Marx Texts"}
-      </h1>
-
+    <div>
       {parts.map((part) => (
         <div key={part.number} className="mb-10">
           <h2 className="text-2xl font-semibold mb-3">
             Part {part.number}: {part.title}
           </h2>
-
           <ul className="space-y-6 ml-4">
             {part.chapters.map((ch) => (
               <li key={ch.id}>
