@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import { WorkContext } from "../work/WorkContext";
 
 export default function PassageSnippet({ passage, term }) {
+  const { works } = useContext(WorkContext);
+  const work = works.find((w) => w.id === passage.work_id);
   const highlightTermInText = (text, term) => {
     if (!term) return text;
     const regex = new RegExp(`(${term})`, "gi");
@@ -34,6 +37,9 @@ export default function PassageSnippet({ passage, term }) {
         >
           Chapter {passage.chapter}: {passage.chapter_title}
         </Link>
+        {work && (
+          <span className="ml-1 text-gray-600 dark:text-gray-400">– {work.title}</span>
+        )}
       </div>
 
       {/* Section title (optional) */}

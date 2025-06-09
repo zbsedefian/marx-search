@@ -1,15 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
+import { WorkContext } from "../work/WorkContext";
 
 export default function Glossary() {
   const [terms, setTerms] = useState([]);
   const [query, setQuery] = useState("");
+  const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
-    fetch("http://localhost:8000/terms/")
+    const url = new URL("http://localhost:8000/terms/");
+    if (currentWorkId) {
+      url.searchParams.set("work_id", currentWorkId);
+    }
+    fetch(url)
       .then((res) => res.json())
       .then((data) => setTerms(data));
-  }, []);
+  }, [currentWorkId]);
 
   const filtered = terms.filter((t) =>
     t.term.toLowerCase().includes(query.toLowerCase())
