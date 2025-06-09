@@ -25,7 +25,7 @@ export default function TableOfContents({ workId }) {
             {part.chapters.map((ch) => (
               <li key={ch.id}>
                 <Link
-                  to={`/read/${currentWorkId || 1}/${ch.id}`}
+                  to={`/read/${workId || 1}/${ch.id}`}
                   className="text-xl text-blue-700 dark:text-blue-400 hover:underline font-medium"
                 >
                   Chapter {ch.id}: {ch.title}
@@ -35,7 +35,9 @@ export default function TableOfContents({ workId }) {
                     {ch.sections.map((sec) => (
                       <li key={sec.section}>
                         <Link
-                          to={`/read/${currentWorkId || 1}/${ch.id}#section-${sec.section}`}
+                          to={`/read/${workId || 1}/${ch.id}#section-${
+                            sec.section
+                          }`}
                           className="hover:underline"
                         >
                           Section {sec.section}: {sec.title}
