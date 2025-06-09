@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Reader from "./pages/Reader";
 import Glossary from "./pages/Glossary";
 import TermDetail from "./pages/TermDetail";
-import Home from "./Home";
+import WorksList from "./pages/WorksList";
+import WorkTableOfContents from "./pages/WorkTableOfContents";
 import NavBar from "./NavBar";
 import SearchResults from "./pages/SearchResults";
 
@@ -12,12 +13,13 @@ export default function App() {
     <Router>
       <NavBar />
       <Routes>
-        <Route path="*" element={<Home />} />
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<WorksList />} />
+        <Route path="/works/:workId" element={<WorkTableOfContents />} />
         <Route path="/read/:chapterId" element={<Reader />} />
         <Route path="/terms" element={<Glossary />} />
         <Route path="/terms/:termId" element={<TermDetail />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="*" element={<WorksList />} />
       </Routes>
     </Router>
   );
