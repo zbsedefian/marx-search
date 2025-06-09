@@ -42,8 +42,9 @@ export default function TermDetail() {
       .then(setPassages);
   }, [termId, page, pageSize, currentWorkId]);
 
-  // Try to extract the first passage's chapter number
+  // Try to extract the first passage's chapter number and work id
   const chapterFromFirstPassage = passages.length ? passages[0].chapter : null;
+  const workFromFirstPassage = passages.length ? passages[0].work_id : null;
 
   if (!term)
     return (
@@ -77,7 +78,7 @@ export default function TermDetail() {
       {/* Floating Back to Chapter */}
       {chapterFromFirstPassage && (
         <Link
-          to={`/read/${chapterFromFirstPassage}`}
+          to={`/read/${workFromFirstPassage}/${chapterFromFirstPassage}`}
           className="fixed bottom-6 left-6 bg-blue-600 text-white px-4 py-2 rounded shadow-lg hover:bg-blue-700"
         >
           ← Back to Chapter {chapterFromFirstPassage}

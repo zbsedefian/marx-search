@@ -193,14 +193,32 @@ def get_chapter(chapter_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/chapter_data/{chapter_id}", response_model=schemas.ChapterDataOut)
-def get_chapter_data(chapter_id: int, db: Session = Depends(get_db)):
-    chapter = db.query(models.Chapter).filter(models.Chapter.id == chapter_id).first()
+def get_chapter_data(
+    chapter_id: int,
+    work_id: int | None = Query(None),
+    db: Session = Depends(get_db)
+):
+    chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id)
+    if work_id is not None:
+        chapter_query = chapter_query.filter(models.Chapter.work_id == work_id)
+    chapter = chapter_query.first()
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
 
-    passages = db.query(models.Passage).filter(models.Passage.chapter == chapter_id).all()
-    sections = db.query(models.Section).filter(models.Section.chapter == chapter_id).all()
-    terms = db.query(models.Term).all()
+    passages = db.query(models.Passage).filter(models.Passage.chapter == chapter_id)
+    if work_id is not None:
+        passages = passages.filter(models.Passage.work_id == work_id)
+    passages = passages.all()
+
+    sections = db.query(models.Section).filter(models.Section.chapter == chapter_id)
+    if work_id is not None:
+        sections = sections.filter(models.Section.work_id == work_id)
+    sections = sections.all()
+
+    terms = db.query(models.Term)
+    if work_id is not None:
+        terms = terms.filter(models.Term.work_id == work_id)
+    terms = terms.all()
 
     # Get current part (find the highest start_chapter <= current chapter)
     part = (
@@ -210,8 +228,13 @@ def get_chapter_data(chapter_id: int, db: Session = Depends(get_db)):
         .first()
     )
 
-    prev_chapter = db.query(models.Chapter).filter(models.Chapter.id == chapter_id - 1).first()
-    next_chapter = db.query(models.Chapter).filter(models.Chapter.id == chapter_id + 1).first()
+    prev_chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id - 1)
+    next_chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id + 1)
+    if work_id is not None:
+        prev_chapter_query = prev_chapter_query.filter(models.Chapter.work_id == work_id)
+        next_chapter_query = next_chapter_query.filter(models.Chapter.work_id == work_id)
+    prev_chapter = prev_chapter_query.first()
+    next_chapter = next_chapter_query.first()
 
     return {
         "title": chapter.title,
@@ -224,11 +247,13 @@ def get_chapter_data(chapter_id: int, db: Session = Depends(get_db)):
         } if part else None,
         "prev_chapter": {
             "id": prev_chapter.id,
-            "title": prev_chapter.title
+            "title": prev_chapter.title,
+            "work_id": prev_chapter.work_id
         } if prev_chapter else None,
         "next_chapter": {
             "id": next_chapter.id,
-            "title": next_chapter.title
+            "title": next_chapter.title,
+            "work_id": next_chapter.work_id
         } if next_chapter else None
     }
 

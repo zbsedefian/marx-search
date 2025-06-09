@@ -63,6 +63,7 @@ class SectionOut(BaseModel):
 class ChapterNavOut(BaseModel):
     id: int
     title: str
+    work_id: int
 
 class PartInfo(BaseModel):
     number: int
