@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import DarkModeToggleFloating from "../darkmode/DarkModeToggleFloating";
 import PassageSnippet from "../components/PassageSnippet";
 import Pagination from "../components/Pagination";
+import { WorkContext } from "../work/WorkContext";
 
 export default function TermDetail() {
   const { termId } = useParams();
@@ -13,22 +14,33 @@ export default function TermDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page")) || 1;
   const pageSize = parseInt(searchParams.get("pageSize")) || 10;
+  const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
     fetch(`http://localhost:8000/terms/${termId}`)
       .then((res) => res.json())
       .then(setTerm);
 
-    fetch(`http://localhost:8000/terms/${termId}/passage_count`)
+    const countUrl = new URL(
+      `http://localhost:8000/terms/${termId}/passage_count`
+    );
+    const passagesUrl = new URL(
+      `http://localhost:8000/terms/${termId}/passages`
+    );
+    passagesUrl.searchParams.set("page", page);
+    passagesUrl.searchParams.set("page_size", pageSize);
+    if (currentWorkId) {
+      countUrl.searchParams.set("work_id", currentWorkId);
+      passagesUrl.searchParams.set("work_id", currentWorkId);
+    }
+    fetch(countUrl)
       .then((res) => res.json())
       .then((data) => setTotal(data.count));
 
-    fetch(
-      `http://localhost:8000/terms/${termId}/passages?page=${page}&page_size=${pageSize}`
-    )
+    fetch(passagesUrl)
       .then((res) => res.json())
       .then(setPassages);
-  }, [termId, page, pageSize]);
+  }, [termId, page, pageSize, currentWorkId]);
 
   // Try to extract the first passage's chapter number
   const chapterFromFirstPassage = passages.length ? passages[0].chapter : null;

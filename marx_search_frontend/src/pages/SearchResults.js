@@ -1,7 +1,8 @@
 import { useLocation, Link, useSearchParams } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import PassageSnippet from "../components/PassageSnippet";
 import Pagination from "../components/Pagination";
+import { WorkContext } from "../work/WorkContext";
 
 export default function SearchResults() {
   const query = new URLSearchParams(useLocation().search).get("q") || "";
@@ -11,21 +12,25 @@ export default function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page")) || 1;
   const pageSize = parseInt(searchParams.get("pageSize")) || 10;
+  const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
     if (query) {
-      fetch(
-        `http://localhost:8000/search?q=${encodeURIComponent(
-          query
-        )}&page=${page}&page_size=${pageSize}`
-      )
+      const params = new URLSearchParams();
+      params.set("q", query);
+      params.set("page", page);
+      params.set("page_size", pageSize);
+      if (currentWorkId) {
+        params.set("work_id", currentWorkId);
+      }
+      fetch(`http://localhost:8000/search?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => {
           setResults(data);
           setTotal(data.total_passages || 0);
         });
     }
-  }, [query, page, pageSize]);
+  }, [query, page, pageSize, currentWorkId]);
 
   if (!results) {
     return <div className="p-6">Searching for “{query}”...</div>;

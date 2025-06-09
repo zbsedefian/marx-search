@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import DarkModeToggleFloating from "../darkmode/DarkModeToggleFloating";
+import { WorkContext } from "../work/WorkContext";
 
 export default function Reader() {
   const { chapterId } = useParams();
@@ -16,6 +17,7 @@ export default function Reader() {
   const [nextChapter, setNextChapter] = useState(null);
   const [allChapters, setAllChapters] = useState([]);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
+  const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
     fetch(`http://localhost:8000/chapter_data/${parseInt(chapterId, 10)}`)
@@ -29,10 +31,14 @@ export default function Reader() {
         setPrevChapter(data.prev_chapter);
         setNextChapter(data.next_chapter);
       });
-    fetch("http://localhost:8000/chapters/")
+    const chaptersUrl = new URL("http://localhost:8000/chapters/");
+    if (currentWorkId) {
+      chaptersUrl.searchParams.set("work_id", currentWorkId);
+    }
+    fetch(chaptersUrl)
       .then((res) => res.json())
       .then(setAllChapters);
-  }, [chapterId]);
+  }, [chapterId, currentWorkId]);
 
   useEffect(() => {
     if (highlightId) {
