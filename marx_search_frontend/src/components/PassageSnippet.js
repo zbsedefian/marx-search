@@ -1,0 +1,65 @@
+import React from "react";
+import { Link } from "react-router-dom";
+
+export default function PassageSnippet({ passage, term }) {
+  const highlightTermInText = (text, term) => {
+    if (!term) return text;
+    const regex = new RegExp(`(${term})`, "gi");
+    return text.split(regex).map((part, i) =>
+      regex.test(part) ? (
+        <mark key={i} className="bg-yellow-200">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
+  const truncateText = (text, maxLength = 300) => {
+    if (!text) return "";
+    return text.length > maxLength ? text.slice(0, maxLength) + "…" : text;
+  };
+
+  return (
+    <li
+      key={passage.id}
+      className="list-none mb-6 p-5 max-w-3xl mx-auto rounded border bg-[#fff8f0] dark:bg-[#2a2a2a] dark:border-gray-700 shadow"
+    >
+      {/* Chapter title */}
+      <div className="text-md font-semibold mb-1">
+        <Link
+          to={`/read/${passage.chapter}`}
+          className="text-blue-600 hover:underline"
+        >
+          Chapter {passage.chapter}: {passage.chapter_title}
+        </Link>
+      </div>
+
+      {/* Section title (optional) */}
+      {passage.section_title && (
+        <div className="text-sm text-gray-600 dark:text-gray-400 italic mb-1">
+          Section {passage.section}: {passage.section_title}
+        </div>
+      )}
+
+      {/* Paragraph link */}
+      <div className="text-sm mb-3">
+        <Link
+          to={`/read/${passage.chapter}?highlight=${passage.id}`}
+          className="text-blue-600 hover:underline"
+        >
+          Paragraph {passage.paragraph}
+        </Link>
+      </div>
+
+      {/* Snippet */}
+      <blockquote className="text-sm text-gray-700 dark:text-gray-300 border-l-4 border-yellow-300 pl-4 italic">
+        {highlightTermInText(
+          truncateText(passage.text_snippet || passage.text),
+          term
+        )}
+      </blockquote>
+    </li>
+  );
+}
