@@ -48,6 +48,8 @@ class Section(Base):
     chapter = Column(Integer, nullable=False)
     section = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work = relationship("Work", backref="sections")
 
 
 class Part(Base):
