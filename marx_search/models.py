@@ -67,3 +67,12 @@ class Work(Base):
     author = Column(String)
     year = Column(String)
     description = Column(Text)
+
+
+class Footnote(Base):
+    __tablename__ = "footnotes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    passage_id = Column(String, ForeignKey("passages.id"), nullable=False)
+    footnote_number = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
