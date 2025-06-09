@@ -29,7 +29,7 @@ export default function Home() {
             {part.chapters.map((ch) => (
               <li key={ch.id}>
                 <Link
-                  to={`/read/${ch.id}`}
+                  to={`/read/${currentWorkId || 1}/${ch.id}`}
                   className="text-xl text-blue-700 dark:text-blue-400 hover:underline font-medium"
                 >
                   Chapter {ch.id}: {ch.title}
@@ -39,7 +39,7 @@ export default function Home() {
                     {ch.sections.map((sec) => (
                       <li key={sec.section}>
                         <Link
-                          to={`/read/${ch.id}#section-${sec.section}`}
+                          to={`/read/${currentWorkId || 1}/${ch.id}#section-${sec.section}`}
                           className="hover:underline"
                         >
                           Section {sec.section}: {sec.title}

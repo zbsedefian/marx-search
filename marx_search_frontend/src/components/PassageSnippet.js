@@ -32,7 +32,7 @@ export default function PassageSnippet({ passage, term }) {
       {/* Chapter title */}
       <div className="text-md font-semibold mb-1">
         <Link
-          to={`/read/${passage.chapter}`}
+          to={`/read/${passage.work_id}/${passage.chapter}`}
           className="text-blue-600 hover:underline"
         >
           Chapter {passage.chapter}: {passage.chapter_title}
@@ -52,7 +52,7 @@ export default function PassageSnippet({ passage, term }) {
       {/* Paragraph link */}
       <div className="text-sm mb-3">
         <Link
-          to={`/read/${passage.chapter}?highlight=${passage.id}`}
+          to={`/read/${passage.work_id}/${passage.chapter}?highlight=${passage.id}`}
           className="text-blue-600 hover:underline"
         >
           Paragraph {passage.paragraph}

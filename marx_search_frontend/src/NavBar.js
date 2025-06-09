@@ -36,7 +36,7 @@ export default function Navbar() {
       {/* Navigation Links and Search */}
       <div className="flex items-center gap-4 flex-wrap">
         <Link
-          to="/read/1"
+          to={currentWorkId ? `/read/${currentWorkId}/1` : "/read/1/1"}
           className="text-blue-700 dark:text-blue-400 hover:underline"
         >
           Read
