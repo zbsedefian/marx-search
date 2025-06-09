@@ -9,7 +9,7 @@ export default function Reader() {
   const highlightId = searchParams.get("highlight");
 
   const [chapterTitle, setChapterTitle] = useState("");
-  const [part, setPart] = useState("");
+  const [part, setPart] = useState(null);
   const [passages, setPassages] = useState([]);
   const [sectionsMeta, setSectionsMeta] = useState([]);
   const [terms, setTerms] = useState([]);
