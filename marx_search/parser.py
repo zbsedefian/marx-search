@@ -5,6 +5,7 @@ import tempfile
 import requests
 from lxml import etree
 from docx import Document
+from docx.oxml.ns import qn
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import Base, Work, Chapter, Section, Passage, Footnote  # Make sure Footnote is defined
@@ -40,8 +41,13 @@ def get_input_source():
 
 
 def extract_footnotes(docx_path):
+    """Return a mapping of footnote id -> text for the DOCX file."""
     with zipfile.ZipFile(docx_path) as z:
-        footnote_xml = z.read("word/footnotes.xml")
+        try:
+            footnote_xml = z.read("word/footnotes.xml")
+        except KeyError:
+            # DOCX has no footnotes part
+            return {}
         footnotes_root = etree.fromstring(footnote_xml)
 
     namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
@@ -56,9 +62,31 @@ def extract_footnotes(docx_path):
     return footnotes
 
 
+def paragraph_text_with_refs(para):
+    """Return text of paragraph with footnote markers and list of referenced ids."""
+    refs = []
+    parts = []
+    for node in para._element.iter():
+        local = etree.QName(node).localname
+        if local == "footnoteReference":
+            fn_id = node.get(qn("w:id"))
+            if fn_id:
+                parts.append(f"<sup>{fn_id}</sup>")
+                refs.append(fn_id)
+        elif local == "t":
+            if node.text:
+                parts.append(node.text)
+        elif local in {"tab"}:
+            parts.append("\t")
+        elif local in {"br", "cr"}:
+            parts.append("\n")
+    return "".join(parts).strip(), refs
+
+
 def parse_and_store(docx_path):
     doc = Document(docx_path)
     footnotes = extract_footnotes(docx_path)
+    has_footnotes = bool(footnotes)
 
     title = input("📘 Title of the work: ").strip()
     author = input("✍️  Author: ").strip()
@@ -83,23 +111,24 @@ def parse_and_store(docx_path):
     session.add(chapter)
 
     for i, para in enumerate(doc.paragraphs):
-        text = para.text.strip()
-        if not text:
+        plain_text = para.text.strip()
+        if not plain_text:
             continue
 
-        if text.isupper() or text.lower().startswith("chapter "):
+        if plain_text.isupper() or plain_text.lower().startswith("chapter "):
             session.commit()
             chapter_id += 1
             paragraph_id = 1
-            chapter_title = text
+            chapter_title = plain_text
             chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
             session.add(chapter)
             continue
 
-        # Footnote references look like: <w:footnoteReference w:id="1"/>
-        fn_matches = [fn_id for fn_id in footnotes if fn_id in text]
-        for fn_id in fn_matches:
-            text = text.replace(fn_id, f"<sup>{fn_id}</sup>")
+        if has_footnotes:
+            text, fn_matches = paragraph_text_with_refs(para)
+        else:
+            text = plain_text
+            fn_matches = []
 
         passage_id = f"{work.id}.ch{chapter_id}.p{paragraph_id}"
         passage = Passage(
@@ -115,11 +144,13 @@ def parse_and_store(docx_path):
 
         # Add footnotes (if any)
         for fn_id in fn_matches:
-            session.add(Footnote(
-                passage_id=passage_id,
-                footnote_number=fn_id,
-                content=footnotes[fn_id]
-            ))
+            session.add(
+                Footnote(
+                    passage_id=passage_id,
+                    footnote_number=fn_id,
+                    content=footnotes.get(fn_id, "")
+                )
+            )
 
         paragraph_id += 1
 
