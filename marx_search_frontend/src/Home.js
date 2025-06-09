@@ -1,18 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
+import { WorkContext } from "./work/WorkContext";
 
 export default function Home() {
   const [parts, setParts] = useState([]);
+  const { works, currentWorkId } = useContext(WorkContext);
+  const currentWork = works.find((w) => w.id === currentWorkId);
 
   useEffect(() => {
     fetch("http://localhost:8000/parts_with_chapters_sections")
       .then((res) => res.json())
       .then(setParts);
-  }, []);
+  }, [currentWorkId]);
 
   return (
     <div className="p-6 bg-[#fceedd] dark:bg-[#1e1e1e] min-h-screen text-gray-800 dark:text-gray-200 font-serif">
-      <h1 className="text-3xl font-bold mb-8">Capital Volume 1</h1>
+      <h1 className="text-3xl font-bold mb-8">
+        {currentWork ? currentWork.title : "Marx Texts"}
+      </h1>
 
       {parts.map((part) => (
         <div key={part.number} className="mb-10">
