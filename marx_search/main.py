@@ -207,7 +207,7 @@ def get_chapter_data(chapter_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/sections/", response_model=list[schemas.SectionOut])
-def get_all_sections(chapter: int, db: Session = Depends(get_db)):
+def get_all_sections(chapter: int | None = Query(None), db: Session = Depends(get_db)):
     query = db.query(models.Section)
     if chapter is not None:
         query = query.filter(models.Section.chapter == chapter)
