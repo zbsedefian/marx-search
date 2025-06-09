@@ -231,7 +231,7 @@ export default function Reader() {
       </div>
 
       {/* Floating chapter selector */}
-      <div className="fixed bottom-6 left-6 flex flex-col gap-2 z-50">
+      <div className="fixed bottom-6 left-6 flex flex-col-2 gap-2 z-50">
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 z-50"
           onClick={() => setShowChapterMenu(!showChapterMenu)}
