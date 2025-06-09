@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey,
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Setup
-engine = create_engine("sqlite:///capital_glossary.db")
+engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
 session = Session()
 Base = declarative_base()
@@ -37,13 +37,13 @@ Work.__table__.create(bind=engine, checkfirst=True)
 print("✅ Ensured 'works' table exists")
 
 # Insert default work
-capital = Work(title="Capital, Volume I", author="Karl Marx", description="The first volume of Capital.")
-session.add(capital)
+default_work = Work(title="Capital, Volume I", author="Karl Marx", description="The first volume of Capital.")
+session.add(default_work)
 session.commit()
-print(f"✅ Inserted work: {capital.title} with ID {capital.id}")
+print(f"✅ Inserted work: {default_work.title} with ID {default_work.id}")
 
 # Update all tables with work_id
-session.execute(text(f"UPDATE chapters SET work_id = {capital.id}"))
+session.execute(text(f"UPDATE chapters SET work_id = {default_work.id}"))
 session.execute(text(f"""
     UPDATE passages
     SET work_id = (
@@ -56,7 +56,7 @@ session.execute(text(f"""
         SELECT work_id FROM chapters WHERE chapters.id = sections.chapter
     )
 """))
-session.execute(text(f"UPDATE terms SET work_id = {capital.id}"))
+session.execute(text(f"UPDATE terms SET work_id = {default_work.id}"))
 session.execute(text(f"""
     UPDATE term_passage_link
     SET work_id = (
