@@ -24,6 +24,19 @@ def get_db():
     finally:
         db.close()
 
+
+@app.get("/works/", response_model=list[schemas.WorkOut])
+def list_works(db: Session = Depends(get_db)):
+    return db.query(models.Work).all()
+
+
+@app.get("/works/{work_id}", response_model=schemas.WorkOut)
+def get_work(work_id: int, db: Session = Depends(get_db)):
+    work = db.query(models.Work).filter(models.Work.id == work_id).first()
+    if not work:
+        raise HTTPException(status_code=404, detail="Work not found")
+    return work
+
 @app.get("/passages/{passage_id}", response_model=schemas.PassageOut)
 def get_passage(passage_id: str, db: Session = Depends(get_db)):
     passage = db.query(models.Passage).filter(models.Passage.id == passage_id).first()
@@ -35,6 +48,7 @@ def get_passage(passage_id: str, db: Session = Depends(get_db)):
 def list_passages(
     chapter: int = Query(None),
     section: int = Query(None),
+    work_id: int = Query(None),
     offset: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db)
@@ -44,11 +58,16 @@ def list_passages(
         query = query.filter(models.Passage.chapter == chapter)
     if section is not None:
         query = query.filter(models.Passage.section == section)
+    if work_id is not None:
+        query = query.filter(models.Passage.work_id == work_id)
     return query.offset(offset).limit(limit).all()
 
 @app.get("/terms/", response_model=list[schemas.TermOut])
-def list_terms(db: Session = Depends(get_db)):
-    return db.query(models.Term).all()
+def list_terms(work_id: int = Query(None), db: Session = Depends(get_db)):
+    query = db.query(models.Term)
+    if work_id is not None:
+        query = query.filter(models.Term.work_id == work_id)
+    return query.all()
 
 @app.get("/terms/{term_id}", response_model=schemas.TermOut)
 def get_term(term_id: str, db: Session = Depends(get_db)):
@@ -64,16 +83,18 @@ from sqlalchemy.orm import aliased
 @app.get("/terms/{term_id}/passages", response_model=list[schemas.TermPassageLinkOut])
 def get_term_links(
     term_id: str,
+    work_id: int = Query(None),
     db: Session = Depends(get_db),
     page: int = 1,
     page_size: int = 10
 ):
     offset = (page - 1) * page_size
 
-    rows = (
+    query = (
         db.query(
             models.Passage.id.label("id"),
             models.TermPassageLink.passage_id,
+            models.TermPassageLink.work_id,
             models.Passage.chapter,
             models.Passage.section,
             models.Passage.paragraph,
@@ -85,10 +106,10 @@ def get_term_links(
         .join(models.Chapter, models.Chapter.id == models.Passage.chapter)
         .outerjoin(models.Section, (models.Section.chapter == models.Passage.chapter) & (models.Section.section == models.Passage.section))
         .filter(models.TermPassageLink.term_id == term_id)
-        .offset(offset)
-        .limit(page_size)
-        .all()
     )
+    if work_id is not None:
+        query = query.filter(models.TermPassageLink.work_id == work_id)
+    rows = query.offset(offset).limit(page_size).all()
 
     # Truncate and rename to match response schema
     results = []
@@ -102,7 +123,8 @@ def get_term_links(
             "paragraph": row.paragraph,
             "text_snippet": extract_context_snippet(row.text, term_id),
             "chapter_title": row.chapter_title,
-            "section_title": row.section_title
+            "section_title": row.section_title,
+            "work_id": row.work_id
         })
 
     return results
@@ -145,14 +167,20 @@ def extract_context_snippet(text, term, context_words=50):
 
 
 @app.get("/terms/{term_id}/passage_count")
-def count_term_links(term_id: str, db: Session = Depends(get_db)):
-    count = db.query(models.TermPassageLink).filter(models.TermPassageLink.term_id == term_id).count()
+def count_term_links(term_id: str, work_id: int = Query(None), db: Session = Depends(get_db)):
+    query = db.query(models.TermPassageLink).filter(models.TermPassageLink.term_id == term_id)
+    if work_id is not None:
+        query = query.filter(models.TermPassageLink.work_id == work_id)
+    count = query.count()
     return {"count": count}
 
 
 @app.get("/chapters/", response_model=list[schemas.ChapterOut])
-def get_chapters(db: Session = Depends(get_db)):
-    return db.query(models.Chapter).order_by(models.Chapter.id).all()
+def get_chapters(work_id: int = Query(None), db: Session = Depends(get_db)):
+    query = db.query(models.Chapter)
+    if work_id is not None:
+        query = query.filter(models.Chapter.work_id == work_id)
+    return query.order_by(models.Chapter.id).all()
 
 
 @app.get("/chapters/{chapter_id}", response_model=schemas.ChapterOut)
@@ -207,10 +235,12 @@ def get_chapter_data(chapter_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/sections/", response_model=list[schemas.SectionOut])
-def get_all_sections(chapter: int, db: Session = Depends(get_db)):
+def get_all_sections(chapter: int | None = Query(None), work_id: int = Query(None), db: Session = Depends(get_db)):
     query = db.query(models.Section)
     if chapter is not None:
         query = query.filter(models.Section.chapter == chapter)
+    if work_id is not None:
+        query = query.filter(models.Section.work_id == work_id)
     return query.order_by(models.Section.id).all()
 
 
@@ -233,6 +263,7 @@ def search(
     exact: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    work_id: int = Query(None),
     db: Session = Depends(get_db),
 ):
     q_lower = q.lower()
@@ -241,7 +272,10 @@ def search(
     # -------------------------
     # Match Terms
     # -------------------------
-    all_terms = db.query(models.Term).all()
+    term_query = db.query(models.Term)
+    if work_id is not None:
+        term_query = term_query.filter(models.Term.work_id == work_id)
+    all_terms = term_query.all()
 
     if exact:
         matching_terms = [
@@ -257,7 +291,10 @@ def search(
     # -------------------------
     # Match Passages
     # -------------------------
-    all_passages = db.query(models.Passage).all()
+    passage_query = db.query(models.Passage)
+    if work_id is not None:
+        passage_query = passage_query.filter(models.Passage.work_id == work_id)
+    all_passages = passage_query.all()
 
     if exact:
         matched_passages = [
@@ -287,6 +324,7 @@ def search(
             "translation": p.translation,
             "chapter_title": chapter.title if chapter else None,
             "section_title": section.title if section else None,
+            "work_id": p.work_id,
         })
 
     return {

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { DarkModeContext } from "./DarkModeContext"; // adjust path as needed
+import { DarkModeContext } from "./DarkModeContext";
 
 export default function DarkModeToggleFloating() {
   const { darkMode, setDarkMode } = useContext(DarkModeContext);

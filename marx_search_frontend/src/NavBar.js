@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DarkModeToggleFloating from "./darkmode/DarkModeToggleFloating";
+import { WorkContext } from "./work/WorkContext";
 
 export default function Navbar() {
   const [query, setQuery] = useState("");
   const [exactMatch, setExactMatch] = useState(false);
   const navigate = useNavigate();
+  const { works, currentWorkId, setCurrentWorkId } = useContext(WorkContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -45,6 +47,20 @@ export default function Navbar() {
         >
           Glossary
         </Link>
+        <select
+          value={currentWorkId || ""}
+          onChange={(e) =>
+            setCurrentWorkId(e.target.value ? parseInt(e.target.value) : null)
+          }
+          className="px-2 py-1 border rounded dark:bg-[#1e1e1e] dark:text-white dark:border-gray-600"
+        >
+          <option value="">All Works</option>
+          {works.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.title}
+            </option>
+          ))}
+        </select>
 
         <form
           onSubmit={handleSubmit}

@@ -1,4 +1,13 @@
-# marx-search
+# Marx Search
+
+This project provides a simple FastAPI backend and a React front end for
+searching various Marxist texts.
+
+## Technical
+
+Run `migrate.py` to initialize the database or add the `work_id` column to an
+existing one. By default the application uses a local SQLite database at
+`marx_texts.db`.
 
 This repository contains a small web app split into two main directories:
 
@@ -44,3 +53,4 @@ marx_search_frontend/
 5. **Check the React components**: look under `src/pages` and `src/components` to see how data from the API is rendered.
 
 Currently the project contains no automated tests. Potential improvements include adding tests and expanding these instructions further.
+
