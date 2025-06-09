@@ -37,30 +37,6 @@ def get_work(work_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Work not found")
     return work
 
-@app.get("/passages/{passage_id}", response_model=schemas.PassageOut)
-def get_passage(passage_id: str, db: Session = Depends(get_db)):
-    passage = db.query(models.Passage).filter(models.Passage.id == passage_id).first()
-    if not passage:
-        raise HTTPException(status_code=404, detail="Passage not found")
-    return passage
-
-@app.get("/passages/", response_model=list[schemas.PassageOut])
-def list_passages(
-    chapter: int = Query(None),
-    section: int = Query(None),
-    work_id: int = Query(None),
-    offset: int = 0,
-    limit: int = 50,
-    db: Session = Depends(get_db)
-):
-    query = db.query(models.Passage)
-    if chapter is not None:
-        query = query.filter(models.Passage.chapter == chapter)
-    if section is not None:
-        query = query.filter(models.Passage.section == section)
-    if work_id is not None:
-        query = query.filter(models.Passage.work_id == work_id)
-    return query.offset(offset).limit(limit).all()
 
 @app.get("/terms/", response_model=list[schemas.TermOut])
 def list_terms(work_id: int = Query(None), db: Session = Depends(get_db)):
@@ -76,7 +52,6 @@ def get_term(term_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Term not found")
     return term
 
-from sqlalchemy.orm import aliased
 
 
 
@@ -183,15 +158,6 @@ def get_chapters(work_id: int = Query(None), db: Session = Depends(get_db)):
     return query.order_by(models.Chapter.id).all()
 
 
-@app.get("/chapters/{chapter_id}", response_model=schemas.ChapterOut)
-def get_chapter(chapter_id: int, db: Session = Depends(get_db)):
-    chapter = db.query(models.Chapter).filter(models.Chapter.id == chapter_id).first()
-    if not chapter:
-        raise HTTPException(status_code=404, detail="Chapter not found")
-    return chapter
-
-
-
 @app.get("/chapter_data/{chapter_id}", response_model=schemas.ChapterDataOut)
 def get_chapter_data(
     chapter_id: int,
@@ -259,27 +225,8 @@ def get_chapter_data(
 
 
 
-@app.get("/sections/", response_model=list[schemas.SectionOut])
-def get_all_sections(chapter: int | None = Query(None), work_id: int = Query(None), db: Session = Depends(get_db)):
-    query = db.query(models.Section)
-    if chapter is not None:
-        query = query.filter(models.Section.chapter == chapter)
-    if work_id is not None:
-        query = query.filter(models.Section.work_id == work_id)
-    return query.order_by(models.Section.id).all()
 
 
-@app.get("/sections/{section_id}", response_model=schemas.SectionOut)
-def get_section(section_id: str, db: Session = Depends(get_db)):
-    section = db.query(models.Section).filter(models.Section.id == section_id).first()
-    if not section:
-        raise HTTPException(status_code=404, detail="Section not found")
-    return section
-
-
-@app.get("/parts/", response_model=list[schemas.PartOut])
-def get_parts(db: Session = Depends(get_db)):
-    return db.query(models.Part).order_by(models.Part.start_chapter).all()
 
 
 @app.get("/search", response_model=schemas.SearchResults)
