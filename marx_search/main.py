@@ -78,7 +78,6 @@ def get_term_links(
             models.Passage.section,
             models.Passage.paragraph,
             models.Passage.text,
-            models.Passage.volume,
             models.Chapter.title.label("chapter_title"),
             models.Section.title.label("section_title"),
         )
@@ -102,7 +101,6 @@ def get_term_links(
             "section": row.section,
             "paragraph": row.paragraph,
             "text_snippet": extract_context_snippet(row.text, term_id),
-            "volume": row.volume,
             "chapter_title": row.chapter_title,
             "section_title": row.section_title
         })
@@ -281,7 +279,6 @@ def search(
         section = db.query(models.Section).filter_by(chapter=p.chapter, section=p.section).first()
         enriched_passages.append({
             "id": p.id,
-            "volume": p.volume,
             "chapter": p.chapter,
             "section": p.section,
             "paragraph": p.paragraph,

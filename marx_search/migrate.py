@@ -1,42 +1,71 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import delete
-from database import SessionLocal
-import models
-from rapidfuzz import fuzz
+from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, MetaData, Table, text
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-MATCH_THRESHOLD = 90  # You can adjust this if needed
+# Setup
+engine = create_engine("sqlite:///capital_glossary.db")
+Session = sessionmaker(bind=engine)
+session = Session()
+Base = declarative_base()
 
-def rebuild_term_passage_links():
-    db: Session = SessionLocal()
+# Define Work model
+class Work(Base):
+    __tablename__ = "works"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    author = Column(String)
+    description = Column(Text)
 
-    print("Clearing existing term-passage links...")
-    db.execute(delete(models.TermPassageLink))
-    db.commit()
+# Reflect existing tables
+metadata = MetaData()
+metadata.reflect(bind=engine)
 
-    terms = db.query(models.Term).all()
-    passages = db.query(models.Passage).all()
+def add_column_if_missing(table_name, column_name, column_type="INTEGER"):
+    if table_name in metadata.tables:
+        table = metadata.tables[table_name]
+        if column_name not in table.columns:
+            with engine.connect() as conn:
+                conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type};"))
+            print(f"✅ Added '{column_name}' column to {table_name}")
 
-    print(f"Linking {len(terms)} terms against {len(passages)} passages...")
+# Add work_id columns
+tables_to_update = ["chapters", "passages", "sections", "terms", "term_passage_link"]
+for table in tables_to_update:
+    add_column_if_missing(table, "work_id")
 
-    count = 0
-    for term in terms:
-        term_text = term.term.lower()
+# Create works table
+Work.__table__.create(bind=engine, checkfirst=True)
+print("✅ Ensured 'works' table exists")
 
-        for passage in passages:
-            if not passage.text:
-                continue
+# Insert default work
+capital = Work(title="Capital, Volume I", author="Karl Marx", description="The first volume of Capital.")
+session.add(capital)
+session.commit()
+print(f"✅ Inserted work: {capital.title} with ID {capital.id}")
 
-            # Match using British spelling; exact substring match preferred, fallback to fuzzy
-            if term_text in passage.text.lower() or fuzz.partial_ratio(term_text, passage.text.lower()) >= MATCH_THRESHOLD:
-                link = models.TermPassageLink(term_id=term.id, passage_id=passage.id)
-                db.add(link)
-                count += 1
+# Update all tables with work_id
+session.execute(text(f"UPDATE chapters SET work_id = {capital.id}"))
+session.execute(text(f"""
+    UPDATE passages
+    SET work_id = (
+        SELECT work_id FROM chapters WHERE chapters.id = passages.chapter
+    )
+"""))
+session.execute(text(f"""
+    UPDATE sections
+    SET work_id = (
+        SELECT work_id FROM chapters WHERE chapters.id = sections.chapter
+    )
+"""))
+session.execute(text(f"UPDATE terms SET work_id = {capital.id}"))
+session.execute(text(f"""
+    UPDATE term_passage_link
+    SET work_id = (
+        SELECT passages.work_id
+        FROM passages
+        WHERE passages.id = term_passage_link.passage_id
+    )
+"""))
 
-    db.commit()
-    db.close()
-    print(f"✅ Inserted {count} term-passage links.")
-
-if __name__ == "__main__":
-    rebuild_term_passage_links()
-
-
+session.commit()
+print("✅ Set work_id across all relevant tables")
+session.close()

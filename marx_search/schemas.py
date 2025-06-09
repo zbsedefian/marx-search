@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 class PassageOut(BaseModel):
     id: str
-    volume: int
     chapter: int
     section: int
     paragraph: int
@@ -31,7 +30,6 @@ class TermPassageLinkOut(BaseModel):
     section: Optional[int]
     paragraph: int
     text_snippet: str
-    volume: int
     chapter_title: str
     section_title: Optional[str]
 
@@ -42,7 +40,6 @@ class TermPassageLinkOut(BaseModel):
 class ChapterOut(BaseModel):
     id: int
     title: str
-    volume: int
 
     class Config:
         from_attributes = True
@@ -50,7 +47,6 @@ class ChapterOut(BaseModel):
 
 class SectionOut(BaseModel):
     id: str
-    volume: int
     chapter: int
     section: int
     title: str
@@ -82,7 +78,6 @@ class PartOut(BaseModel):
     number: int
     title: str
     start_chapter: int
-    volume: int
 
     class Config:
         from_attributes = True
