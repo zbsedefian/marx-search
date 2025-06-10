@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
-from models import Base, Work, Chapter, Section, Passage
+from marx_search.models import Base, Work, Chapter, Section, Passage
 
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)

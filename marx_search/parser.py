@@ -9,7 +9,7 @@ from docx import Document
 from docx.oxml.ns import qn
 from sqlalchemy import create_engine, text, func
 from sqlalchemy.orm import sessionmaker
-from models import (
+from marx_search.models import (
     Base,
     Work,
     Chapter,
