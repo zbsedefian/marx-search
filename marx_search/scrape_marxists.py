@@ -89,7 +89,14 @@ def parse_page(
     counts["chapters"] += 1
     session.flush()
 
-    paragraph_id = 1
+    # Start numbering passages after the last existing paragraph for this
+    # chapter so numbering always continues sequentially within a chapter.
+    paragraph_id = (
+        session.query(func.max(Passage.paragraph))
+        .filter(Passage.chapter == chapter_id)
+        .scalar()
+        or 0
+    ) + 1
     current_section = None
     section_count = 1
 
