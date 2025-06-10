@@ -17,6 +17,7 @@ export default function Reader() {
   const [nextChapter, setNextChapter] = useState(null);
   const [allChapters, setAllChapters] = useState([]);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
+  const [footnotesMap, setFootnotesMap] = useState({});
   const { currentWorkId, setCurrentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
@@ -54,10 +55,53 @@ export default function Reader() {
     }
   }, [passages, highlightId]);
 
-  const renderSuperscripts = (text) => {
-    return text.replace(
-      /(?<!\w)\.(\d+)(?!\w)/g,
-      (_, num) => `<sup>${num}</sup>`
+  useEffect(() => {
+    if (!passages.length) return;
+    const fetchFootnotes = async () => {
+      const map = {};
+      await Promise.all(
+        passages.map(async (p) => {
+          try {
+            const res = await fetch(
+              `http://localhost:8000/passages/${p.id}/footnotes`
+            );
+            if (res.ok) {
+              map[p.id] = await res.json();
+            } else {
+              map[p.id] = [];
+            }
+          } catch {
+            map[p.id] = [];
+          }
+        })
+      );
+      setFootnotesMap(map);
+    };
+    fetchFootnotes();
+  }, [passages]);
+
+
+  const addFootnoteLinks = (content, passageId) => {
+    const processString = (str) =>
+      str.split(/(?<!\w)\.(\d+)(?!\w)/g).map((part, idx) => {
+        if (idx % 2 === 1) {
+          const num = part;
+          return (
+            <sup key={`fn-${passageId}-${num}`} id={`fnref-${passageId}-${num}`}>
+              <a
+                href={`#fn-${passageId}-${num}`}
+                className="text-blue-600 hover:underline"
+              >
+                {num}
+              </a>
+            </sup>
+          );
+        }
+        return part;
+      });
+
+    return content.flatMap((node) =>
+      typeof node === "string" ? processString(node) : node
     );
   };
 
@@ -203,7 +247,27 @@ export default function Reader() {
                     : null}
                 </div>
               )}
-              <div>{linkifyTerms(renderSuperscripts(p.text), terms)}</div>
+              <div>
+                {addFootnoteLinks(linkifyTerms(p.text, terms), p.id)}
+              </div>
+              {footnotesMap[p.id] && footnotesMap[p.id].length > 0 && (
+                <ol className="text-sm mt-2 ml-4 list-decimal">
+                  {footnotesMap[p.id].map((fn) => (
+                    <li
+                      key={fn.id}
+                      id={`fn-${p.id}-${fn.footnote_number}`}
+                    >
+                      {fn.content}{" "}
+                      <a
+                        href={`#fnref-${p.id}-${fn.footnote_number}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        ↩
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </div>
           );
         })}
