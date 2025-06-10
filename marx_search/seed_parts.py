@@ -56,7 +56,11 @@ def main():
                     continue
                 exists = (
                     session.query(Part)
-                    .filter(Part.start_chapter == start_id, Part.end_chapter == end_id)
+                    .filter(
+                        Part.work_id == work.id,
+                        Part.start_chapter == start_id,
+                        Part.end_chapter == end_id,
+                    )
                     .first()
                 )
                 if exists:
@@ -67,6 +71,7 @@ def main():
                     title=title,
                     start_chapter=start_id,
                     end_chapter=end_id,
+                    work_id=work.id,
                 )
                 session.add(part)
                 print(f"Added part {number} for '{work_title}'.")

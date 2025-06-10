@@ -208,7 +208,10 @@ def get_chapter_data(
     # Get current part (find the highest start_chapter <= current chapter)
     part = (
         db.query(models.Part)
-        .filter(models.Part.start_chapter <= chapter.id)
+        .filter(
+            models.Part.work_id == work_id,
+            models.Part.start_chapter <= chapter.id,
+        )
         .order_by(models.Part.start_chapter.desc())
         .first()
     )
@@ -354,7 +357,10 @@ def get_parts_with_chapters_sections(
     work_id: int | None = Query(None),
     db: Session = Depends(get_db),
 ):
-    parts = db.query(models.Part).order_by(models.Part.number).all()
+    parts_query = db.query(models.Part).order_by(models.Part.number)
+    if work_id is not None:
+        parts_query = parts_query.filter(models.Part.work_id == work_id)
+    parts = parts_query.all()
 
     chapters_query = db.query(models.Chapter)
     if work_id is not None:
@@ -424,7 +430,10 @@ def get_chapters_with_sections(
         )
     sections = sections_query.all()
 
-    parts = db.query(models.Part).order_by(models.Part.number).all()
+    parts_query = db.query(models.Part).order_by(models.Part.number)
+    if work_id is not None:
+        parts_query = parts_query.filter(models.Part.work_id == work_id)
+    parts = parts_query.all()
 
     section_map: dict[int, list[dict[str, int | str]]] = {}
     for sec in sections:

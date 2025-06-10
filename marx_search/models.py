@@ -12,7 +12,7 @@ class Passage(Base):
     paragraph = Column(Integer)
     text = Column(Text)
     translation = Column(String)
-    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"))
     work = relationship("Work", backref="passages")
 
 class Term(Base):
@@ -22,7 +22,7 @@ class Term(Base):
     definition = Column(Text)
     tags = Column(String)
     aliases = Column(Text)
-    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"))
     work = relationship("Work", backref="terms")
 
 class TermPassageLink(Base):
@@ -30,7 +30,7 @@ class TermPassageLink(Base):
     term_id = Column(String, ForeignKey("terms.id"), primary_key=True)
     passage_id = Column(String, ForeignKey("passages.id"), primary_key=True)
     text_snippet = Column(Text)
-    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"))
 
 class Chapter(Base):
     __tablename__ = "chapters"
@@ -38,7 +38,7 @@ class Chapter(Base):
     id = Column(Integer, primary_key=True)
     chapter_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
-    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"))
     work = relationship("Work", backref="chapters")
 
 
@@ -49,7 +49,7 @@ class Section(Base):
     chapter = Column(Integer, nullable=False)
     section = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
-    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"))
     work = relationship("Work", backref="sections")
 
 
@@ -61,6 +61,8 @@ class Part(Base):
     title = Column(String, nullable=False)
     start_chapter = Column(Integer, nullable=False)
     end_chapter = Column(Integer, nullable=False)
+    work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    work = relationship("Work", backref="parts")
 
 
 class Work(Base):

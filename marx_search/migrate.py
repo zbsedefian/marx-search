@@ -28,7 +28,14 @@ def add_column_if_missing(table_name, column_name, column_type="INTEGER"):
             print(f"✅ Added '{column_name}' column to {table_name}")
 
 # Add work_id columns
-tables_to_update = ["chapters", "passages", "sections", "terms", "term_passage_link"]
+tables_to_update = [
+    "chapters",
+    "passages",
+    "sections",
+    "terms",
+    "term_passage_link",
+    "parts",
+]
 for table in tables_to_update:
     add_column_if_missing(table, "work_id")
 
@@ -65,6 +72,7 @@ session.execute(text(f"""
         WHERE passages.id = term_passage_link.passage_id
     )
 """))
+session.execute(text(f"UPDATE parts SET work_id = {default_work.id}"))
 
 session.commit()
 print("✅ Set work_id across all relevant tables")
