@@ -55,7 +55,14 @@ def parse_page(session, url: str, chapter_id: int, work: Work, counts: dict):
     page.raise_for_status()
     soup = BeautifulSoup(page.text, "html.parser")
 
-    header = soup.find(["h1", "h2", "h3"])
+    header = None
+    for h in soup.find_all(["h1", "h2", "h3"]):
+        text = h.get_text(strip=True)
+        if not re.match(r"(?i)part\b", text):
+            header = h
+            break
+    if not header:
+        header = soup.find(["h1", "h2", "h3"])
     chapter_title = header.get_text(strip=True) if header else os.path.basename(url)
 
     chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
