@@ -56,6 +56,16 @@ class TermPassageLinkOut(BaseModel):
         from_attributes = True
 
 
+class FootnoteOut(BaseModel):
+    id: int
+    passage_id: str
+    footnote_number: str
+    content: str
+
+    class Config:
+        from_attributes = True
+
+
 class ChapterOut(BaseModel):
     id: int
     chapter_number: int

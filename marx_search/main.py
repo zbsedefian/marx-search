@@ -224,6 +224,16 @@ def get_chapter_data(
     }
 
 
+@app.get("/passages/{passage_id}/footnotes", response_model=list[schemas.FootnoteOut])
+def get_passage_footnotes(passage_id: str, db: Session = Depends(get_db)):
+    return (
+        db.query(models.Footnote)
+        .filter(models.Footnote.passage_id == passage_id)
+        .order_by(models.Footnote.footnote_number)
+        .all()
+    )
+
+
 
 
 
