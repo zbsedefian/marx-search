@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class PassageOut(BaseModel):
-    id: str
+    id: int
     chapter: int
     section: int
     paragraph: int
@@ -19,7 +19,7 @@ class PassageOut(BaseModel):
 class PassageSearchOut(BaseModel):
     """Passage information returned from the search endpoint."""
 
-    id: str
+    id: int
     chapter: int
     section: int | None = None
     paragraph: int
@@ -46,7 +46,7 @@ class TermOut(BaseModel):
 
 
 class TermPassageLinkOut(BaseModel):
-    id: str
+    id: int
     chapter: int
     section: Optional[int]
     paragraph: int

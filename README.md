@@ -66,11 +66,12 @@ After scraping new works, run `python marx_search/seed_parts.py` to populate the
 
 ### Passage numbering
 
-Paragraph numbers restart at the beginning of each chapter.  Sections are
-recorded only for the table of contents and do not affect numbering.  If you
-imported data with per‑section numbering, run `python marx_search/renumber_passages.py`
-to rewrite the passage IDs and paragraph fields so they are sequential within
-each chapter.
+Each passage now has a simple integer ID that increments across the whole
+database. Paragraph numbers still restart at the beginning of each chapter and
+sections are tracked only for the table of contents.  If you previously imported
+data that numbered paragraphs within sections, run
+`python marx_search/renumber_passages.py` to rewrite the IDs and remove the
+per‑section numbering.
 
 Currently the project contains no automated tests. Potential improvements include adding tests and expanding these instructions further.
 

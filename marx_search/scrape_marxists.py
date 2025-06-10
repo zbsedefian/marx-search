@@ -68,7 +68,8 @@ def parse_page(
     chapter_number: int,
     work: Work,
     counts: dict,
-):
+    next_pid: int,
+) -> int:
     """Download a single page and store its chapter, sections and passages."""
     page = requests.get(url)
     page.raise_for_status()
@@ -120,7 +121,7 @@ def parse_page(
             if not text:
                 continue
             passage = Passage(
-                id=f"{work.id}.ch{chapter_id}.p{paragraph_id}",
+                id=str(next_pid),
                 chapter=chapter_id,
                 section=current_section,
                 paragraph=paragraph_id,
@@ -131,7 +132,8 @@ def parse_page(
             session.add(passage)
             counts["passages"] += 1
             paragraph_id += 1
-
+            next_pid += 1
+    return next_pid
 
 def scrape_work(
     session,
@@ -155,6 +157,7 @@ def scrape_work(
 
     max_id = session.query(func.max(Chapter.id)).scalar() or 0
     next_id = max_id + 1
+    next_pid = (session.query(func.max(Passage.id)).scalar() or 0) + 1
     max_num = (
         session.query(func.max(Chapter.chapter_number))
         .filter(Chapter.work_id == work.id)
@@ -166,7 +169,9 @@ def scrape_work(
     counts = {"chapters": 0, "sections": 0, "passages": 0}
     for link in links:
         try:
-            parse_page(session, link, next_id, next_num, work, counts)
+            next_pid = parse_page(
+                session, link, next_id, next_num, work, counts, next_pid
+            )
             next_id += 1
             next_num += 1
         except Exception as e:
