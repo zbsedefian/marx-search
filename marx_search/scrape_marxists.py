@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
 from models import Base, Work, Chapter, Section, Passage
@@ -116,8 +116,8 @@ def scrape_work(
 
     work = get_or_create_work(session, title, author, year, description)
 
-    existing_chapters = session.query(Chapter).filter_by(work_id=work.id).all()
-    next_id = 1 if not existing_chapters else max(c.id for c in existing_chapters) + 1
+    max_id = session.query(func.max(Chapter.id)).scalar() or 0
+    next_id = max_id + 1
 
     counts = {"chapters": 0, "sections": 0, "passages": 0}
     for link in links:

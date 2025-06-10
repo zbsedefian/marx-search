@@ -7,7 +7,7 @@ import re
 from lxml import etree
 from docx import Document
 from docx.oxml.ns import qn
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, func
 from sqlalchemy.orm import sessionmaker
 from models import (
     Base,
@@ -155,11 +155,8 @@ def parse_and_store(docx_path, work):
     existing_chapters = {
         c.title: c for c in session.query(Chapter).filter_by(work_id=work.id).all()
     }
-    chapter_id = (
-        1
-        if not existing_chapters
-        else max(c.id for c in existing_chapters.values()) + 1
-    )
+    max_id = session.query(func.max(Chapter.id)).scalar() or 0
+    chapter_id = max_id + 1
     paragraph_id = 1
     chapter_title = f"Chapter {chapter_id}"
     chapter = existing_chapters.get(chapter_title)
