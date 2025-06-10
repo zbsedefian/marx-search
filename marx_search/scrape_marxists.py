@@ -49,7 +49,7 @@ def get_or_create_work(session, title: str, author: str, year: str | None = None
     return work
 
 
-def parse_page(session, url: str, chapter_id: int, work: Work, counts: dict):
+def parse_page(session, url: str, chapter_id: int, chapter_num: int, work: Work, counts: dict):
     """Download a single page and store its chapter, sections and passages."""
     page = requests.get(url)
     page.raise_for_status()
@@ -58,7 +58,7 @@ def parse_page(session, url: str, chapter_id: int, work: Work, counts: dict):
     header = soup.find(["h1", "h2", "h3"])
     chapter_title = header.get_text(strip=True) if header else os.path.basename(url)
 
-    chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
+    chapter = Chapter(id=chapter_id, number=chapter_num, title=chapter_title, work_id=work.id)
     session.add(chapter)
     counts["chapters"] += 1
     session.flush()
@@ -123,12 +123,15 @@ def scrape_work(
 
     max_id = session.query(func.max(Chapter.id)).scalar() or 0
     next_id = max_id + 1
+    next_num = session.query(func.count(Chapter.id)).filter(Chapter.work_id == work.id).scalar() or 0
+    next_num += 1
 
     counts = {"chapters": 0, "sections": 0, "passages": 0}
     for link in links:
         try:
-            parse_page(session, link, next_id, work, counts)
+            parse_page(session, link, next_id, next_num, work, counts)
             next_id += 1
+            next_num += 1
         except Exception as e:
             print(f"⚠️  Failed to scrape {link}: {e}")
             session.rollback()

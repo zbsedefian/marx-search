@@ -37,19 +37,19 @@ export default function TableOfContents({ workId }) {
           )}
           <ul className="space-y-6 ml-4">
             {group.chapters.map((ch) => (
-              <li key={ch.id}>
+              <li key={ch.number}>
                 <Link
-                  to={`/read/${workId || 1}/${ch.id}`}
+                  to={`/read/${workId || 1}/${ch.number}`}
                   className="text-xl text-blue-700 dark:text-blue-400 hover:underline font-medium"
                 >
-                  Chapter {ch.id}: {ch.title}
+                  Chapter {ch.number}: {ch.title}
                 </Link>
                 {ch.sections.length > 0 && (
                   <ul className="ml-6 mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
                     {ch.sections.map((sec) => (
                       <li key={sec.section}>
                         <Link
-                          to={`/read/${workId || 1}/${ch.id}#section-${sec.section}`}
+                          to={`/read/${workId || 1}/${ch.number}#section-${sec.section}`}
                           className="hover:underline"
                         >
                           Section {sec.section}: {sec.title}

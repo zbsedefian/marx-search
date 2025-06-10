@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -36,8 +36,10 @@ class Chapter(Base):
     __tablename__ = "chapters"
 
     id = Column(Integer, primary_key=True)
+    number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
     work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
+    __table_args__ = (UniqueConstraint("work_id", "number"),)
     work = relationship("Work", backref="chapters")
 
 
