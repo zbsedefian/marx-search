@@ -126,6 +126,7 @@ def scrape_work(
             next_id += 1
         except Exception as e:
             print(f"⚠️  Failed to scrape {link}: {e}")
+            session.rollback()
 
     print(
         f"Ready to insert {counts['chapters']} chapters, {counts['sections']} sections,"
