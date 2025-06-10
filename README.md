@@ -55,7 +55,7 @@ marx_search_frontend/
 
 ### Importing additional works
 
-Run `python marx_search/scrape_marxists.py` to automatically download a set of texts from [marxists.org](https://www.marxists.org) and insert them into `marx_texts.db`. The scraper parses each work's table of contents to grab all chapter and section links. It currently ingests:
+Run `python marx_search/scrape_marxists.py` to automatically download a set of texts from [marxists.org](https://www.marxists.org) and insert them into `marx_texts.db`. The scraper parses each work's table of contents to grab all chapter and section links. For each work you will be shown a summary of the chapters, sections and passages that will be added and asked to confirm before anything is committed. It currently ingests:
 * Critique of the Gotha Program
 * Manifesto of the Communist Party
 * Capital, Volume II

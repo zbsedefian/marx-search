@@ -12,7 +12,6 @@ from models import Base, Work, Chapter, Section, Passage
 
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
-session = Session()
 
 
 def extract_year(text: str) -> str | None:
@@ -36,16 +35,16 @@ def parse_index(index_url: str):
     return entries, year
 
 
-def get_or_create_work(title: str, author: str, year: str | None = None, description: str | None = None) -> Work:
+def get_or_create_work(session, title: str, author: str, year: str | None = None, description: str | None = None) -> Work:
     work = session.query(Work).filter_by(title=title, author=author).first()
     if not work:
         work = Work(title=title, author=author, year=year, description=description)
         session.add(work)
-        session.commit()
+        session.flush()
     return work
 
 
-def parse_page(url: str, chapter_id: int, work: Work):
+def parse_page(session, url: str, chapter_id: int, work: Work, counts: dict):
     """Download a single page and store its chapter, sections and passages."""
     page = requests.get(url)
     page.raise_for_status()
@@ -56,7 +55,8 @@ def parse_page(url: str, chapter_id: int, work: Work):
 
     chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
     session.add(chapter)
-    session.commit()
+    counts["chapters"] += 1
+    session.flush()
 
     paragraph_id = 1
     current_section = None
@@ -74,6 +74,7 @@ def parse_page(url: str, chapter_id: int, work: Work):
                 work_id=work.id,
             )
             session.add(sec)
+            counts["sections"] += 1
             current_section = section_count
             section_count += 1
         elif element.name == "p":
@@ -90,12 +91,13 @@ def parse_page(url: str, chapter_id: int, work: Work):
                 work_id=work.id,
             )
             session.add(passage)
+            counts["passages"] += 1
             paragraph_id += 1
 
-    session.commit()
 
 
 def scrape_work(
+    session,
     index_url: str,
     title: str,
     author: str,
@@ -112,17 +114,30 @@ def scrape_work(
     if links is None:
         links = [u for u, _ in toc_links] or [index_url]
 
-    work = get_or_create_work(title, author, year, description)
+    work = get_or_create_work(session, title, author, year, description)
 
     existing_chapters = session.query(Chapter).filter_by(work_id=work.id).all()
     next_id = 1 if not existing_chapters else max(c.id for c in existing_chapters) + 1
 
+    counts = {"chapters": 0, "sections": 0, "passages": 0}
     for link in links:
         try:
-            parse_page(link, next_id, work)
+            parse_page(session, link, next_id, work, counts)
             next_id += 1
         except Exception as e:
             print(f"⚠️  Failed to scrape {link}: {e}")
+
+    print(
+        f"Ready to insert {counts['chapters']} chapters, {counts['sections']} sections,"
+        f" {counts['passages']} passages for '{title}' ({year or 'unknown'})."
+    )
+    confirm = input("Commit to database? [y/N]: ").strip().lower()
+    if confirm == "y":
+        session.commit()
+        print(f"✅ Committed {title}\n")
+    else:
+        session.rollback()
+        print("❌ Aborted, rolled back changes\n")
 
 
 
@@ -201,7 +216,8 @@ if __name__ == "__main__":
     ]
 
     for w in works:
-        scrape_work(w["url"], w["title"], w["author"], links=w.get("links"))
+        with Session() as session:
+            scrape_work(session, w["url"], w["title"], w["author"], links=w.get("links"))
 
     print("\n✅ Done scraping all works.")
 
