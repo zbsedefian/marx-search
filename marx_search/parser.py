@@ -11,7 +11,7 @@ from models import Base, Work, Chapter, Section, Passage, Footnote  # Make sure 
 from sqlalchemy.exc import IntegrityError
 
 # Setup DB
-engine = create_engine("sqlite:///capital_glossary.db")
+engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
 session = Session()
 
