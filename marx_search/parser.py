@@ -158,6 +158,7 @@ def parse_and_store(docx_path, work):
     max_id = session.query(func.max(Chapter.id)).scalar() or 0
     chapter_id = max_id + 1
     paragraph_id = 1
+    next_pid = (session.query(func.max(Passage.id)).scalar() or 0) + 1
     chapter_title = f"Chapter {chapter_id}"
     chapter = existing_chapters.get(chapter_title)
     if not chapter:
@@ -228,7 +229,7 @@ def parse_and_store(docx_path, work):
             text = plain_text
             fn_matches = []
 
-        passage_id = f"{work.id}.ch{chapter_id}.p{paragraph_id}"
+        passage_id = str(next_pid)
         last_passage_id = passage_id
         passage = session.get(Passage, passage_id)
         if passage:
@@ -264,6 +265,7 @@ def parse_and_store(docx_path, work):
                 )
 
         paragraph_id += 1
+        next_pid += 1
 
     # flush any trailing notes at end of document
     for num, content in notes_buffer:
