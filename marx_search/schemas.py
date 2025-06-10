@@ -10,7 +10,7 @@ class PassageOut(BaseModel):
     paragraph: int
     text: str
     translation: str
-    work_id: int
+    work_id: int | None = None
 
     class Config:
         from_attributes = True
@@ -39,7 +39,7 @@ class TermOut(BaseModel):
     definition: str
     tags: str
     aliases: Optional[str]
-    work_id: int
+    work_id: int | None = None
 
     class Config:
         from_attributes = True
@@ -53,7 +53,7 @@ class TermPassageLinkOut(BaseModel):
     text_snippet: str
     chapter_title: str
     section_title: Optional[str]
-    work_id: int
+    work_id: int | None = None
 
     class Config:
         from_attributes = True
@@ -63,7 +63,7 @@ class ChapterOut(BaseModel):
     id: int
     chapter_number: int
     title: str
-    work_id: int
+    work_id: int | None = None
 
     class Config:
         from_attributes = True
@@ -74,7 +74,7 @@ class SectionOut(BaseModel):
     chapter: int
     section: int
     title: str
-    work_id: int
+    work_id: int | None = None
 
     class Config:
         from_attributes = True
@@ -84,7 +84,7 @@ class ChapterNavOut(BaseModel):
     id: int
     chapter_number: int
     title: str
-    work_id: int
+    work_id: int | None = None
 
 
 class PartInfo(BaseModel):
@@ -106,6 +106,8 @@ class PartOut(BaseModel):
     number: int
     title: str
     start_chapter: int
+    end_chapter: int
+    work_id: int
 
     class Config:
         from_attributes = True
