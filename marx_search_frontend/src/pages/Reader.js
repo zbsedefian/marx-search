@@ -9,6 +9,7 @@ export default function Reader() {
   const highlightId = searchParams.get("highlight");
 
   const [chapterTitle, setChapterTitle] = useState("");
+  const [chapterNumber, setChapterNumber] = useState(null);
   const [part, setPart] = useState(null);
   const [passages, setPassages] = useState([]);
   const [sectionsMeta, setSectionsMeta] = useState([]);
@@ -30,6 +31,7 @@ export default function Reader() {
         setSectionsMeta(data.sections);
         setTerms(data.terms);
         setChapterTitle(data.title);
+        setChapterNumber(data.chapter_number);
         setPart(data.part);
         setPrevChapter(data.prev_chapter);
         setNextChapter(data.next_chapter);
@@ -158,7 +160,7 @@ export default function Reader() {
 
         <div className="flex justify-between items-center flex-wrap gap-3 mb-3">
           <h1 className="text-3xl font-bold">
-            Chapter {parseInt(chapterId, 10)}: {chapterTitle}
+            Chapter {chapterNumber ?? parseInt(chapterId, 10)}: {chapterTitle}
           </h1>
           <div className="flex gap-4 text-sm flex-wrap">
             {prevChapter && (
@@ -261,7 +263,7 @@ export default function Reader() {
                   className="text-blue-600 hover:underline"
                   onClick={() => setShowChapterMenu(false)}
                 >
-                  Chapter {ch.id}: {ch.title}
+                  Chapter {ch.chapter_number ?? ch.id}: {ch.title}
                 </Link>
               </li>
             ))}

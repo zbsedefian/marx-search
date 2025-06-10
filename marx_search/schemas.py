@@ -59,6 +59,7 @@ class TermPassageLinkOut(BaseModel):
 class ChapterOut(BaseModel):
     id: int
     title: str
+    chapter_number: int | None = None
     work_id: int
 
     class Config:
@@ -79,6 +80,7 @@ class SectionOut(BaseModel):
 class ChapterNavOut(BaseModel):
     id: int
     title: str
+    chapter_number: int | None = None
     work_id: int
 
 class PartInfo(BaseModel):
@@ -87,6 +89,7 @@ class PartInfo(BaseModel):
 
 class ChapterDataOut(BaseModel):
     title: str
+    chapter_number: int | None = None
     passages: List[PassageOut]
     sections: List[SectionOut]
     terms: List[TermOut]
@@ -117,6 +120,7 @@ class ChapterTOC(BaseModel):
 
     id: int
     title: str
+    chapter_number: int | None = None
     sections: list[SectionMeta]
     part: PartInfo | None = None
 
