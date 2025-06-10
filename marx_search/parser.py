@@ -3,12 +3,20 @@ import sys
 import zipfile
 import tempfile
 import requests
+import re
 from lxml import etree
 from docx import Document
 from docx.oxml.ns import qn
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from models import Base, Work, Chapter, Section, Passage, Footnote  # Make sure Footnote is defined
+from models import (
+    Base,
+    Work,
+    Chapter,
+    Section,
+    Passage,
+    Footnote,
+)  # Make sure Footnote is defined
 
 # Setup DB
 engine = create_engine("sqlite:///capital_glossary.db")
@@ -93,14 +101,18 @@ def extract_notes(docx_path):
                 return {}
 
     notes_root = etree.fromstring(xml_part)
-    namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
     notes = {}
     for fn in notes_root.findall(f"w:{note_tag}", namespaces):
-        fn_id = fn.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
+        fn_id = fn.get(
+            "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id"
+        )
         if fn_id in ("-1", "0"):
             continue
         paragraphs = fn.findall(".//w:p", namespaces)
-        text = " ".join("".join(node.text for node in p.iter() if node.text) for p in paragraphs)
+        text = " ".join(
+            "".join(node.text for node in p.iter() if node.text) for p in paragraphs
+        )
         notes[fn_id] = text.strip()
     return notes
 
@@ -137,8 +149,14 @@ def parse_and_store(docx_path, work):
         print("🛑 Aborted.")
         sys.exit(0)
 
-    existing_chapters = {c.title: c for c in session.query(Chapter).filter_by(work_id=work.id).all()}
-    chapter_id = 1 if not existing_chapters else max(c.id for c in existing_chapters.values()) + 1
+    existing_chapters = {
+        c.title: c for c in session.query(Chapter).filter_by(work_id=work.id).all()
+    }
+    chapter_id = (
+        1
+        if not existing_chapters
+        else max(c.id for c in existing_chapters.values()) + 1
+    )
     paragraph_id = 1
     chapter_title = f"Chapter {chapter_id}"
     chapter = existing_chapters.get(chapter_title)
@@ -149,12 +167,40 @@ def parse_and_store(docx_path, work):
     else:
         chapter_id = chapter.id
 
+    in_notes = False
+    notes_buffer = []
+    last_passage_id = None
+
     for i, para in enumerate(doc.paragraphs):
         plain_text = para.text.strip()
         if not plain_text:
             continue
 
+        # --- handle note parsing mode ---
+        if in_notes:
+            if plain_text.isupper() or plain_text.lower().startswith("chapter "):
+                # flush buffered notes before starting new chapter
+                for num, content in notes_buffer:
+                    session.add(
+                        Footnote(
+                            passage_id=last_passage_id,
+                            footnote_number=num,
+                            content=content.strip(),
+                        )
+                    )
+                notes_buffer = []
+                in_notes = False
+                # fall through to chapter handling
+            else:
+                m = re.match(r"^(\d+)[\).]?\s*(.*)", plain_text)
+                if m:
+                    notes_buffer.append([m.group(1), m.group(2)])
+                elif notes_buffer:
+                    notes_buffer[-1][1] += " " + plain_text
+                continue
+
         if plain_text.isupper() or plain_text.lower().startswith("chapter "):
+            # new chapter starts
             session.commit()
             chapter_id += 1
             paragraph_id = 1
@@ -169,6 +215,13 @@ def parse_and_store(docx_path, work):
                 chapter_id = chapter.id
             continue
 
+        # detect start of footnotes list
+        if re.match(r"^\d+[\).]?\s+", plain_text) and paragraph_id > 1:
+            in_notes = True
+            m = re.match(r"^(\d+)[\).]?\s*(.*)", plain_text)
+            notes_buffer.append([m.group(1), m.group(2)])
+            continue
+
         if has_footnotes:
             text, fn_matches = paragraph_text_with_refs(para)
         else:
@@ -176,6 +229,7 @@ def parse_and_store(docx_path, work):
             fn_matches = []
 
         passage_id = f"{work.id}.ch{chapter_id}.p{paragraph_id}"
+        last_passage_id = passage_id
         passage = session.get(Passage, passage_id)
         if passage:
             passage.text = text
@@ -191,12 +245,13 @@ def parse_and_store(docx_path, work):
             )
             session.add(passage)
 
-        # Add footnotes (if any)
+        # Add footnotes from docx refs (if any)
         for fn_id in fn_matches:
-            existing_fn = session.query(Footnote).filter_by(
-                passage_id=passage_id,
-                footnote_number=fn_id
-            ).first()
+            existing_fn = (
+                session.query(Footnote)
+                .filter_by(passage_id=passage_id, footnote_number=fn_id)
+                .first()
+            )
             if existing_fn:
                 existing_fn.content = footnotes.get(fn_id, "")
             else:
@@ -204,11 +259,21 @@ def parse_and_store(docx_path, work):
                     Footnote(
                         passage_id=passage_id,
                         footnote_number=fn_id,
-                        content=footnotes.get(fn_id, "")
+                        content=footnotes.get(fn_id, ""),
                     )
                 )
 
         paragraph_id += 1
+
+    # flush any trailing notes at end of document
+    for num, content in notes_buffer:
+        session.add(
+            Footnote(
+                passage_id=last_passage_id,
+                footnote_number=num,
+                content=content.strip(),
+            )
+        )
 
     session.commit()
     print("✅ All passages and footnotes imported.")
