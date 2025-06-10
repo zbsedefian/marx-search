@@ -150,6 +150,17 @@ def count_term_links(term_id: str, work_id: int = Query(None), db: Session = Dep
     return {"count": count}
 
 
+@app.get("/passages/{passage_id}/footnotes", response_model=list[schemas.FootnoteOut])
+def get_passage_footnotes(passage_id: str, db: Session = Depends(get_db)):
+    footnotes = (
+        db.query(models.Footnote)
+        .filter(models.Footnote.passage_id == passage_id)
+        .order_by(models.Footnote.footnote_number)
+        .all()
+    )
+    return footnotes
+
+
 @app.get("/chapters/", response_model=list[schemas.ChapterOut])
 def get_chapters(work_id: int = Query(None), db: Session = Depends(get_db)):
     query = db.query(models.Chapter)
