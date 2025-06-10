@@ -36,6 +36,7 @@ class Chapter(Base):
     __tablename__ = "chapters"
 
     id = Column(Integer, primary_key=True)
+    chapter_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
     work_id = Column(Integer, ForeignKey("works.id"), nullable=False)
     work = relationship("Work", backref="chapters")

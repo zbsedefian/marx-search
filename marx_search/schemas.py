@@ -58,6 +58,7 @@ class TermPassageLinkOut(BaseModel):
 
 class ChapterOut(BaseModel):
     id: int
+    chapter_number: int
     title: str
     work_id: int
 
