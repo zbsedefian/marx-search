@@ -38,6 +38,7 @@ marx_search_frontend/
 - **Schemas** – `schemas.py` exposes the Pydantic response models.
 - **Migration script** – `migrate.py` adds `work_id` columns and creates a default `works` entry.
 - **Web scraping tool** – `scrape_marxists.py` fetches Marxist texts from marxists.org and stores them in the database.
+- **Parts seeder** – `seed_parts.py` inserts high level Part records so chapters can be grouped in the table of contents.
 
 ## Frontend Highlights
 - Built with React and React Router. `App.js` defines routes for the reader, glossary and search pages.
@@ -60,6 +61,8 @@ Run `python marx_search/scrape_marxists.py` to automatically download a set of t
 * Manifesto of the Communist Party
 * Capital, Volume II
 * Capital, Volume III
+
+After scraping new works, run `python marx_search/seed_parts.py` to populate the `parts` table. This groups chapters into logical parts for the table of contents.
 
 Currently the project contains no automated tests. Potential improvements include adding tests and expanding these instructions further.
 
