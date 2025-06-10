@@ -1,6 +1,6 @@
 import os
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -26,12 +26,17 @@ def parse_index(index_url: str):
     soup = BeautifulSoup(resp.text, "html.parser")
 
     year = extract_year(soup.get_text())
-    entries = []
+    entries: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    parsed = urlparse(index_url)
+    base_url = index_url if parsed.path.endswith("/") else index_url[: index_url.rfind("/") + 1]
     for a in soup.find_all("a", href=True):
         href = a["href"]
         if href.endswith(".htm") or ".htm#" in href:
-            full = urljoin(index_url, href)
-            entries.append((full, a.get_text(strip=True)))
+            full = urljoin(base_url, href)
+            if full.startswith(base_url) and full not in seen:
+                entries.append((full, a.get_text(strip=True)))
+                seen.add(full)
     return entries, year
 
 
