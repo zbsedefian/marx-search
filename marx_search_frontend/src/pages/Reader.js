@@ -163,7 +163,7 @@ export default function Reader() {
           <div className="flex gap-4 text-sm flex-wrap">
             {prevChapter && (
               <Link
-                to={`/read/${prevChapter.work_id}/${prevChapter.id}`}
+                to={`/read/${prevChapter.work_id}/${prevChapter.number}`}
                 className="text-blue-600 hover:underline"
               >
                 ← {prevChapter.title}
@@ -171,7 +171,7 @@ export default function Reader() {
             )}
             {nextChapter && (
               <Link
-                to={`/read/${nextChapter.work_id}/${nextChapter.id}`}
+                to={`/read/${nextChapter.work_id}/${nextChapter.number}`}
                 className="text-blue-600 hover:underline"
               >
                 {nextChapter.title} →
@@ -212,7 +212,7 @@ export default function Reader() {
         <div className="flex justify-between items-center border-t pt-4 mt-8 text-sm">
           {prevChapter ? (
             <Link
-              to={`/read/${prevChapter.work_id}/${prevChapter.id}`}
+              to={`/read/${prevChapter.work_id}/${prevChapter.number}`}
               className="text-blue-600 hover:underline"
             >
               ← {prevChapter.title}
@@ -222,7 +222,7 @@ export default function Reader() {
           )}
           {nextChapter && (
             <Link
-              to={`/read/${nextChapter.work_id}/${nextChapter.id}`}
+              to={`/read/${nextChapter.work_id}/${nextChapter.number}`}
               className="text-blue-600 hover:underline"
             >
               {nextChapter.title} →
@@ -255,13 +255,13 @@ export default function Reader() {
           </h3>
           <ul className="space-y-1">
             {allChapters.map((ch) => (
-              <li key={ch.id}>
+              <li key={ch.number}>
                 <Link
-                  to={`/read/${workId}/${ch.id}`}
+                  to={`/read/${workId}/${ch.number}`}
                   className="text-blue-600 hover:underline"
                   onClick={() => setShowChapterMenu(false)}
                 >
-                  Chapter {ch.id}: {ch.title}
+                  Chapter {ch.number}: {ch.title}
                 </Link>
               </li>
             ))}

@@ -42,7 +42,7 @@ def main():
             chapters = (
                 session.query(Chapter)
                 .filter(Chapter.work_id == work.id)
-                .order_by(Chapter.id)
+                .order_by(Chapter.number)
                 .all()
             )
             num_to_id = {i + 1: ch.id for i, ch in enumerate(chapters)}

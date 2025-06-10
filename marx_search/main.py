@@ -155,28 +155,29 @@ def get_chapters(work_id: int = Query(None), db: Session = Depends(get_db)):
     query = db.query(models.Chapter)
     if work_id is not None:
         query = query.filter(models.Chapter.work_id == work_id)
-    return query.order_by(models.Chapter.id).all()
+    chapters = query.order_by(models.Chapter.number).all()
+    return [schemas.ChapterOut(number=c.number, title=c.title, work_id=c.work_id) for c in chapters]
 
 
-@app.get("/chapter_data/{chapter_id}", response_model=schemas.ChapterDataOut)
+@app.get("/chapter_data/{chapter_number}", response_model=schemas.ChapterDataOut)
 def get_chapter_data(
-    chapter_id: int,
+    chapter_number: int,
     work_id: int | None = Query(None),
     db: Session = Depends(get_db)
 ):
-    chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id)
+    chapter_query = db.query(models.Chapter).filter(models.Chapter.number == chapter_number)
     if work_id is not None:
         chapter_query = chapter_query.filter(models.Chapter.work_id == work_id)
     chapter = chapter_query.first()
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
 
-    passages = db.query(models.Passage).filter(models.Passage.chapter == chapter_id)
+    passages = db.query(models.Passage).filter(models.Passage.chapter == chapter.id)
     if work_id is not None:
         passages = passages.filter(models.Passage.work_id == work_id)
     passages = passages.all()
 
-    sections = db.query(models.Section).filter(models.Section.chapter == chapter_id)
+    sections = db.query(models.Section).filter(models.Section.chapter == chapter.id)
     if work_id is not None:
         sections = sections.filter(models.Section.work_id == work_id)
     sections = sections.all()
@@ -189,13 +190,13 @@ def get_chapter_data(
     # Get current part (find the highest start_chapter <= current chapter)
     part = (
         db.query(models.Part)
-        .filter(models.Part.start_chapter <= chapter_id)
+        .filter(models.Part.start_chapter <= chapter.id)
         .order_by(models.Part.start_chapter.desc())
         .first()
     )
 
-    prev_chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id - 1)
-    next_chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id + 1)
+    prev_chapter_query = db.query(models.Chapter).filter(models.Chapter.number == chapter_number - 1)
+    next_chapter_query = db.query(models.Chapter).filter(models.Chapter.number == chapter_number + 1)
     if work_id is not None:
         prev_chapter_query = prev_chapter_query.filter(models.Chapter.work_id == work_id)
         next_chapter_query = next_chapter_query.filter(models.Chapter.work_id == work_id)
@@ -212,12 +213,12 @@ def get_chapter_data(
             "title": part.title
         } if part else None,
         "prev_chapter": {
-            "id": prev_chapter.id,
+            "number": prev_chapter.number,
             "title": prev_chapter.title,
             "work_id": prev_chapter.work_id
         } if prev_chapter else None,
         "next_chapter": {
-            "id": next_chapter.id,
+            "number": next_chapter.number,
             "title": next_chapter.title,
             "work_id": next_chapter.work_id
         } if next_chapter else None
@@ -288,7 +289,7 @@ def search(
         section = db.query(models.Section).filter_by(chapter=p.chapter, section=p.section).first()
         enriched_passages.append({
             "id": p.id,
-            "chapter": p.chapter,
+            "chapter": chapter.number if chapter else p.chapter,
             "section": p.section,
             "paragraph": p.paragraph,
             "text": p.text,
@@ -318,7 +319,7 @@ def get_parts_with_chapters_sections(
     chapters_query = db.query(models.Chapter)
     if work_id is not None:
         chapters_query = chapters_query.filter(models.Chapter.work_id == work_id)
-    chapters = chapters_query.order_by(models.Chapter.id).all()
+    chapters = chapters_query.order_by(models.Chapter.number).all()
 
     sections_query = db.query(models.Section)
     if work_id is not None:
@@ -338,7 +339,7 @@ def get_parts_with_chapters_sections(
     for part in parts:
         part_chapters = [
             {
-                "id": ch.id,
+                "number": ch.number,
                 "title": ch.title,
                 "sections": section_map.get(ch.id, [])
             }
@@ -366,7 +367,7 @@ def get_chapters_with_sections(
     chapters_query = db.query(models.Chapter)
     if work_id is not None:
         chapters_query = chapters_query.filter(models.Chapter.work_id == work_id)
-    chapters = chapters_query.order_by(models.Chapter.id).all()
+    chapters = chapters_query.order_by(models.Chapter.number).all()
 
     sections_query = db.query(models.Section)
     if work_id is not None:
@@ -391,7 +392,7 @@ def get_chapters_with_sections(
     for ch in chapters:
         result.append(
             {
-                "id": ch.id,
+                "number": ch.number,
                 "title": ch.title,
                 "sections": section_map.get(ch.id, []),
                 "part": part_for(ch.id),

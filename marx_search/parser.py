@@ -161,7 +161,7 @@ def parse_and_store(docx_path, work):
     chapter_title = f"Chapter {chapter_id}"
     chapter = existing_chapters.get(chapter_title)
     if not chapter:
-        chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
+        chapter = Chapter(id=chapter_id, number=chapter_id, title=chapter_title, work_id=work.id)
         session.add(chapter)
         session.commit()
     else:
@@ -207,7 +207,7 @@ def parse_and_store(docx_path, work):
             chapter_title = plain_text
             chapter = existing_chapters.get(chapter_title)
             if not chapter:
-                chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
+                chapter = Chapter(id=chapter_id, number=chapter_id, title=chapter_title, work_id=work.id)
                 session.add(chapter)
                 session.commit()
                 existing_chapters[chapter_title] = chapter

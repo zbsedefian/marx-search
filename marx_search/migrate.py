@@ -1,4 +1,14 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, MetaData, Table, text
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    Text,
+    ForeignKey,
+    MetaData,
+    Table,
+    text,
+)
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Setup
@@ -32,6 +42,9 @@ tables_to_update = ["chapters", "passages", "sections", "terms", "term_passage_l
 for table in tables_to_update:
     add_column_if_missing(table, "work_id")
 
+# Add chapter number column if missing
+add_column_if_missing("chapters", "number")
+
 # Create works table
 Work.__table__.create(bind=engine, checkfirst=True)
 print("✅ Ensured 'works' table exists")
@@ -44,6 +57,17 @@ print(f"✅ Inserted work: {default_work.title} with ID {default_work.id}")
 
 # Update all tables with work_id
 session.execute(text(f"UPDATE chapters SET work_id = {default_work.id}"))
+works = session.execute(text("SELECT id FROM works")).fetchall()
+for (wid,) in works:
+    chapters = session.execute(
+        text("SELECT id FROM chapters WHERE work_id = :wid ORDER BY id"),
+        {"wid": wid},
+    ).fetchall()
+    for idx, (cid,) in enumerate(chapters, start=1):
+        session.execute(
+            text("UPDATE chapters SET number = :num WHERE id = :cid"),
+            {"num": idx, "cid": cid},
+        )
 session.execute(text(f"""
     UPDATE passages
     SET work_id = (
