@@ -29,8 +29,8 @@ export default function PassageSnippet({ passage, term }) {
       key={passage.id}
       className="list-none mb-6 p-5 max-w-3xl mx-auto rounded border bg-[#fff8f0] dark:bg-[#2a2a2a] dark:border-gray-700 shadow"
     >
-      {/* Chapter title */}
-      <div className="text-md font-semibold mb-1">
+      {/* Chapter title and work name */}
+      <div className="flex justify-between items-baseline mb-1 text-md font-semibold">
         <Link
           to={`/read/${passage.work_id}/${passage.chapter}`}
           className="text-blue-600 hover:underline"
@@ -38,7 +38,9 @@ export default function PassageSnippet({ passage, term }) {
           Chapter {passage.chapter}: {passage.chapter_title}
         </Link>
         {work && (
-          <span className="ml-1 text-gray-600 dark:text-gray-400">– {work.title}</span>
+          <span className="italic text-sm text-gray-600 dark:text-gray-400">
+            {work.title}
+          </span>
         )}
       </div>
 
