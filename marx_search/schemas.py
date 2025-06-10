@@ -14,6 +14,22 @@ class PassageOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+class PassageSearchOut(BaseModel):
+    """Passage information returned from the search endpoint."""
+    id: str
+    chapter: int
+    section: int | None = None
+    paragraph: int
+    text: str | None = None
+    translation: str | None = None
+    text_snippet: str
+    chapter_title: str | None = None
+    section_title: str | None = None
+
+    class Config:
+        from_attributes = True
+
 class TermOut(BaseModel):
     id: str
     term: str
@@ -103,7 +119,7 @@ class WorkOut(BaseModel):
 class SearchResults(BaseModel):
     query: str
     terms: list[TermOut]
-    passages: list[PassageOut]
+    passages: list[PassageSearchOut]
     total_passages: int
     page: int
     page_size: int
