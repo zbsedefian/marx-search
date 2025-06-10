@@ -84,36 +84,39 @@ def select_work():
         print(f"✅ Created Work: {title} with ID {work.id}")
     return work
 
-
 def extract_notes(docx_path):
-    """Return a mapping of note id -> text for footnotes or endnotes."""
+    """Return a mapping of note id -> text for footnotes."""
     with zipfile.ZipFile(docx_path) as z:
-        xml_part = None
-        note_tag = None
         try:
             xml_part = z.read("word/footnotes.xml")
-            note_tag = "footnote"
+            print(xml_part[:500])
         except KeyError:
-            try:
-                xml_part = z.read("word/endnotes.xml")
-                note_tag = "endnote"
-            except KeyError:
-                return {}
+            print("No footnotes.xml found.")
+            return {}
 
     notes_root = etree.fromstring(xml_part)
+    print(notes_root.nsmap)
+    for el in notes_root.iter():
+        print(el.tag)
+
     namespaces = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    note_tag = "footnote"
+    found_any = False
+    for fn in notes_root.findall(".//w:footnote", namespaces):
+        found_any = True
+        fn_id = fn.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
+        print("Found footnote ID:", fn_id)
     notes = {}
     for fn in notes_root.findall(f"w:{note_tag}", namespaces):
-        fn_id = fn.get(
-            "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id"
-        )
-        if fn_id in ("-1", "0"):
+        fn_id = fn.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
+        if fn_id in ("-1", "0"):  # these are typically footnote separators or continuation
             continue
         paragraphs = fn.findall(".//w:p", namespaces)
         text = " ".join(
             "".join(node.text for node in p.iter() if node.text) for p in paragraphs
         )
         notes[fn_id] = text.strip()
+
     return notes
 
 
@@ -142,7 +145,7 @@ def parse_and_store(docx_path, work):
     doc = Document(docx_path)
     footnotes = extract_notes(docx_path)
     has_footnotes = bool(footnotes)
-
+    print(footnotes)
     print("\n⚠️  This will write data to your database.")
     confirm = input("Proceed? Type 'yes' to continue: ").strip().lower()
     if confirm != "yes":
