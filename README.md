@@ -37,6 +37,7 @@ marx_search_frontend/
 - **API routes** – `main.py` configures CORS and exposes endpoints to read passages, chapters and search terms.
 - **Schemas** – `schemas.py` exposes the Pydantic response models.
 - **Migration script** – `migrate.py` adds `work_id` columns and creates a default `works` entry.
+- **Web scraping tool** – `scrape_marxists.py` fetches Marxist texts from marxists.org and stores them in the database.
 
 ## Frontend Highlights
 - Built with React and React Router. `App.js` defines routes for the reader, glossary and search pages.
@@ -51,6 +52,14 @@ marx_search_frontend/
 3. **Explore API endpoints**: review the routes in `main.py` to learn about the available data.
 4. **Learn the data schema**: inspect `models.py` and `migrate.py` to see how tables relate.
 5. **Check the React components**: look under `src/pages` and `src/components` to see how data from the API is rendered.
+
+### Importing additional works
+
+Run `python marx_search/scrape_marxists.py` to automatically download a set of texts from [marxists.org](https://www.marxists.org) and insert them into `marx_texts.db`. The scraper parses each work's table of contents to grab all chapter and section links. It currently ingests:
+* Critique of the Gotha Program
+* Manifesto of the Communist Party
+* Capital, Volume II
+* Capital, Volume III
 
 Currently the project contains no automated tests. Potential improvements include adding tests and expanding these instructions further.
 
