@@ -4,6 +4,7 @@ import DarkModeToggleFloating from "../darkmode/DarkModeToggleFloating";
 import PassageSnippet from "../components/PassageSnippet";
 import Pagination from "../components/Pagination";
 import { WorkContext } from "../work/WorkContext";
+import API_BASE_URL from "../config";
 
 export default function TermDetail() {
   const { termId } = useParams();
@@ -17,15 +18,17 @@ export default function TermDetail() {
   const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/terms/${termId}`)
+    fetch(`${API_BASE_URL}/terms/${termId}`)
       .then((res) => res.json())
       .then(setTerm);
 
     const countUrl = new URL(
-      `http://localhost:8000/terms/${termId}/passage_count`
+      `/terms/${termId}/passage_count`,
+      API_BASE_URL
     );
     const passagesUrl = new URL(
-      `http://localhost:8000/terms/${termId}/passages`
+      `/terms/${termId}/passages`,
+      API_BASE_URL
     );
     passagesUrl.searchParams.set("page", page);
     passagesUrl.searchParams.set("page_size", pageSize);

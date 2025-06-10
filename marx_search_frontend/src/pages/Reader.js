@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import DarkModeToggleFloating from "../darkmode/DarkModeToggleFloating";
 import { WorkContext } from "../work/WorkContext";
+import API_BASE_URL from "../config";
 
 export default function Reader() {
   const { workId, chapterNumber } = useParams();
@@ -22,7 +23,8 @@ export default function Reader() {
   useEffect(() => {
     setCurrentWorkId(parseInt(workId, 10));
     const chapterUrl = new URL(
-      `http://localhost:8000/chapter_data/${workId}/${parseInt(chapterNumber, 10)}`
+      `/chapter_data/${workId}/${parseInt(chapterNumber, 10)}`,
+      API_BASE_URL
     );
     fetch(chapterUrl)
       .then((res) => res.json())
@@ -35,7 +37,7 @@ export default function Reader() {
         setPrevChapter(data.prev_chapter);
         setNextChapter(data.next_chapter);
       });
-    const chaptersUrl = new URL("http://localhost:8000/chapters/");
+    const chaptersUrl = new URL("/chapters/", API_BASE_URL);
     chaptersUrl.searchParams.set("work_id", workId);
     fetch(chaptersUrl)
       .then((res) => res.json())
