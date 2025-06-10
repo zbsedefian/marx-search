@@ -2,6 +2,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
+
 class PassageOut(BaseModel):
     id: str
     chapter: int
@@ -17,6 +18,7 @@ class PassageOut(BaseModel):
 
 class PassageSearchOut(BaseModel):
     """Passage information returned from the search endpoint."""
+
     id: str
     chapter: int
     section: int | None = None
@@ -29,6 +31,7 @@ class PassageSearchOut(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class TermOut(BaseModel):
     id: str
@@ -79,12 +82,15 @@ class SectionOut(BaseModel):
 
 class ChapterNavOut(BaseModel):
     id: int
+    chapter_number: int
     title: str
     work_id: int
+
 
 class PartInfo(BaseModel):
     number: int
     title: str
+
 
 class ChapterDataOut(BaseModel):
     title: str
@@ -94,7 +100,6 @@ class ChapterDataOut(BaseModel):
     part: PartInfo | None = None
     prev_chapter: ChapterNavOut | None = None
     next_chapter: ChapterNavOut | None = None
-
 
 
 class PartOut(BaseModel):
@@ -117,6 +122,7 @@ class ChapterTOC(BaseModel):
     """Chapter info with optional part data and section list."""
 
     id: int
+    chapter_number: int
     title: str
     sections: list[SectionMeta]
     part: PartInfo | None = None

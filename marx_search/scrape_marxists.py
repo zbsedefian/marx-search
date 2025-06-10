@@ -29,7 +29,11 @@ def parse_index(index_url: str):
     entries: list[tuple[str, str]] = []
     seen: set[str] = set()
     parsed = urlparse(index_url)
-    base_url = index_url if parsed.path.endswith("/") else index_url[: index_url.rfind("/") + 1]
+    base_url = (
+        index_url
+        if parsed.path.endswith("/")
+        else index_url[: index_url.rfind("/") + 1]
+    )
     for a in soup.find_all("a", href=True):
         href = a["href"]
         if href.endswith(".htm") or ".htm#" in href:
@@ -40,25 +44,47 @@ def parse_index(index_url: str):
     return entries, year
 
 
-def get_or_create_work(session, title: str, author: str, year: str | None = None, description: str | None = None) -> Work:
+def get_or_create_work(
+    session,
+    title: str,
+    author: str,
+    year: str | None = None,
+    description: str | None = None,
+) -> Work:
     work = session.query(Work).filter_by(title=title, author=author).first()
     if not work:
-        work = Work(title=title, author=author, year=year, description=description)
+        work = Work(
+            title=title, author=author, year=year, description=description
+        )
         session.add(work)
         session.flush()
     return work
 
 
-def parse_page(session, url: str, chapter_id: int, work: Work, counts: dict):
+def parse_page(
+    session,
+    url: str,
+    chapter_id: int,
+    chapter_number: int,
+    work: Work,
+    counts: dict,
+):
     """Download a single page and store its chapter, sections and passages."""
     page = requests.get(url)
     page.raise_for_status()
     soup = BeautifulSoup(page.text, "html.parser")
 
     header = soup.find(["h1", "h2", "h3"])
-    chapter_title = header.get_text(strip=True) if header else os.path.basename(url)
+    chapter_title = (
+        header.get_text(strip=True) if header else os.path.basename(url)
+    )
 
-    chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
+    chapter = Chapter(
+        id=chapter_id,
+        chapter_number=chapter_number,
+        title=chapter_title,
+        work_id=work.id,
+    )
     session.add(chapter)
     counts["chapters"] += 1
     session.flush()
@@ -100,7 +126,6 @@ def parse_page(session, url: str, chapter_id: int, work: Work, counts: dict):
             paragraph_id += 1
 
 
-
 def scrape_work(
     session,
     index_url: str,
@@ -123,12 +148,20 @@ def scrape_work(
 
     max_id = session.query(func.max(Chapter.id)).scalar() or 0
     next_id = max_id + 1
+    max_num = (
+        session.query(func.max(Chapter.chapter_number))
+        .filter(Chapter.work_id == work.id)
+        .scalar()
+        or 0
+    )
+    next_num = max_num + 1
 
     counts = {"chapters": 0, "sections": 0, "passages": 0}
     for link in links:
         try:
-            parse_page(session, link, next_id, work, counts)
+            parse_page(session, link, next_id, next_num, work, counts)
             next_id += 1
+            next_num += 1
         except Exception as e:
             print(f"⚠️  Failed to scrape {link}: {e}")
             session.rollback()
@@ -146,7 +179,6 @@ def scrape_work(
         print("❌ Aborted, rolled back changes\n")
 
 
-
 def collect_numeric_anchors(url: str) -> list[str]:
     """Return links to numeric anchors within a given page."""
     anchors: list[str] = []
@@ -161,7 +193,9 @@ def collect_numeric_anchors(url: str) -> list[str]:
                 name = href[1:]
                 if re.fullmatch(r"\d+(?:\.\d+)*", name):
                     names.add(name)
-        for name in sorted(names, key=lambda s: [int(p) for p in s.split(".")]):
+        for name in sorted(
+            names, key=lambda s: [int(p) for p in s.split(".")]
+        ):
             anchors.append(f"{url}#{name}")
     except Exception:
         pass
@@ -211,19 +245,28 @@ if __name__ == "__main__":
             "url": "https://www.marxists.org/archive/marx/works/1885-c2/",
             "title": "Capital, Volume II",
             "author": "Karl Marx",
-            "links": links_capital_vol2("https://www.marxists.org/archive/marx/works/1885-c2/"),
+            "links": links_capital_vol2(
+                "https://www.marxists.org/archive/marx/works/1885-c2/"
+            ),
         },
         {
             "url": "https://www.marxists.org/archive/marx/works/1894-c3/",
             "title": "Capital, Volume III",
             "author": "Karl Marx",
-            "links": links_capital_vol3("https://www.marxists.org/archive/marx/works/1894-c3/"),
+            "links": links_capital_vol3(
+                "https://www.marxists.org/archive/marx/works/1894-c3/"
+            ),
         },
     ]
 
     for w in works:
         with Session() as session:
-            scrape_work(session, w["url"], w["title"], w["author"], links=w.get("links"))
+            scrape_work(
+                session,
+                w["url"],
+                w["title"],
+                w["author"],
+                links=w.get("links"),
+            )
 
     print("\n✅ Done scraping all works.")
-
