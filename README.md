@@ -64,5 +64,13 @@ Run `python marx_search/scrape_marxists.py` to automatically download a set of t
 
 After scraping new works, run `python marx_search/seed_parts.py` to populate the `parts` table. This groups chapters into logical parts for the table of contents.
 
+### Passage numbering
+
+Paragraph numbers restart at the beginning of each chapter.  Sections are
+recorded only for the table of contents and do not affect numbering.  If you
+imported data with per‑section numbering, run `python marx_search/renumber_passages.py`
+to rewrite the passage IDs and paragraph fields so they are sequential within
+each chapter.
+
 Currently the project contains no automated tests. Potential improvements include adding tests and expanding these instructions further.
 
