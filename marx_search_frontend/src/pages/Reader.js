@@ -54,11 +54,38 @@ export default function Reader() {
     }
   }, [passages, highlightId]);
 
-  const renderSuperscripts = (text) => {
-    return text.replace(
-      /(?<!\w)\.(\d+)(?!\w)/g,
-      (_, num) => `<sup>${num}</sup>`
-    );
+  const renderSuperscripts = (nodes) => {
+    const regex = /(?<!\w)\.(\d+)(?!\w)/g;
+
+    const processString = (str, prefix) => {
+      const pieces = [];
+      let lastIndex = 0;
+      let match;
+      let i = 0;
+
+      while ((match = regex.exec(str)) !== null) {
+        if (match.index > lastIndex) {
+          pieces.push(str.slice(lastIndex, match.index));
+        }
+        pieces.push(
+          <sup key={`${prefix}-${i++}`}>{match[1]}</sup>
+        );
+        lastIndex = match.index + match[0].length;
+      }
+      if (lastIndex < str.length) {
+        pieces.push(str.slice(lastIndex));
+      }
+      return pieces;
+    };
+
+    const arr = Array.isArray(nodes) ? nodes : [nodes];
+    let supIndex = 0;
+    return arr.flatMap((node) => {
+      if (typeof node === "string") {
+        return processString(node, `sup-${supIndex++}`);
+      }
+      return node;
+    });
   };
 
   const linkifyTerms = (text, terms) => {
@@ -203,7 +230,7 @@ export default function Reader() {
                     : null}
                 </div>
               )}
-              <div>{linkifyTerms(renderSuperscripts(p.text), terms)}</div>
+              <div>{renderSuperscripts(linkifyTerms(p.text, terms))}</div>
             </div>
           );
         })}
