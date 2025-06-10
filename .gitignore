@@ -10,7 +10,6 @@ build/
 pip-wheel-metadata/
 *.log
 *.sqlite3
-*.db
 
 # Virtual environments
 .venv/
