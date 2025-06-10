@@ -39,6 +39,44 @@ def get_input_source():
         sys.exit(1)
 
 
+def select_work():
+    """Prompt the user to choose an existing Work or create a new one."""
+    update = input("🔄 Update existing work? (yes/no): ").strip().lower()
+    if update == "yes":
+        works = session.query(Work).order_by(Work.id).all()
+        if not works:
+            print("❌ No works found in the database.")
+            sys.exit(1)
+        print("Available works:")
+        for w in works:
+            print(f"{w.id}: {w.title} by {w.author}")
+        selected = input("Enter the ID of the work to update: ").strip()
+        try:
+            work = session.get(Work, int(selected))
+        except Exception:
+            work = None
+        if not work:
+            print("❌ Work not found.")
+            sys.exit(1)
+        print(f"🔗 Using existing Work record with ID {work.id}")
+        return work
+
+    title = input("📘 Title of the work: ").strip()
+    author = input("✍️  Author: ").strip()
+    year = input("📅 Year (optional): ").strip()
+    description = input("📝 Description (optional): ").strip()
+
+    work = session.query(Work).filter_by(title=title, author=author).first()
+    if work:
+        print(f"🔗 Using existing Work record with ID {work.id}")
+    else:
+        work = Work(title=title, author=author, year=year, description=description)
+        session.add(work)
+        session.commit()
+        print(f"✅ Created Work: {title} with ID {work.id}")
+    return work
+
+
 def extract_notes(docx_path):
     """Return a mapping of note id -> text for footnotes or endnotes."""
     with zipfile.ZipFile(docx_path) as z:
@@ -88,30 +126,16 @@ def paragraph_text_with_refs(para):
     return "".join(parts).strip(), refs
 
 
-def parse_and_store(docx_path):
+def parse_and_store(docx_path, work):
     doc = Document(docx_path)
     footnotes = extract_notes(docx_path)
     has_footnotes = bool(footnotes)
-
-    title = input("📘 Title of the work: ").strip()
-    author = input("✍️  Author: ").strip()
-    year = input("📅 Year (optional): ").strip()
-    description = input("📝 Description (optional): ").strip()
 
     print("\n⚠️  This will write data to your database.")
     confirm = input("Proceed? Type 'yes' to continue: ").strip().lower()
     if confirm != "yes":
         print("🛑 Aborted.")
         sys.exit(0)
-
-    work = session.query(Work).filter_by(title=title, author=author).first()
-    if work:
-        print(f"🔗 Using existing Work record with ID {work.id}")
-    else:
-        work = Work(title=title, author=author, year=year, description=description)
-        session.add(work)
-        session.commit()
-        print(f"✅ Created Work: {title} with ID {work.id}")
 
     existing_chapters = {c.title: c for c in session.query(Chapter).filter_by(work_id=work.id).all()}
     chapter_id = 1 if not existing_chapters else max(c.id for c in existing_chapters.values()) + 1
@@ -193,5 +217,6 @@ def parse_and_store(docx_path):
 
 if __name__ == "__main__":
     print("📚 Marx Parser Booting Up")
+    work = select_work()
     docx_path = get_input_source()
-    parse_and_store(docx_path)
+    parse_and_store(docx_path, work)
