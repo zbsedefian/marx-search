@@ -9,7 +9,6 @@ from docx.oxml.ns import qn
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import Base, Work, Chapter, Section, Passage, Footnote  # Make sure Footnote is defined
-from sqlalchemy.exc import IntegrityError
 
 # Setup DB
 engine = create_engine("sqlite:///capital_glossary.db")
@@ -105,16 +104,26 @@ def parse_and_store(docx_path):
         print("🛑 Aborted.")
         sys.exit(0)
 
-    work = Work(title=title, author=author, year=year, description=description)
-    session.add(work)
-    session.commit()
-    print(f"✅ Created Work: {title} with ID {work.id}")
+    work = session.query(Work).filter_by(title=title, author=author).first()
+    if work:
+        print(f"🔗 Using existing Work record with ID {work.id}")
+    else:
+        work = Work(title=title, author=author, year=year, description=description)
+        session.add(work)
+        session.commit()
+        print(f"✅ Created Work: {title} with ID {work.id}")
 
-    chapter_id = 1
+    existing_chapters = {c.title: c for c in session.query(Chapter).filter_by(work_id=work.id).all()}
+    chapter_id = 1 if not existing_chapters else max(c.id for c in existing_chapters.values()) + 1
     paragraph_id = 1
     chapter_title = f"Chapter {chapter_id}"
-    chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
-    session.add(chapter)
+    chapter = existing_chapters.get(chapter_title)
+    if not chapter:
+        chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
+        session.add(chapter)
+        session.commit()
+    else:
+        chapter_id = chapter.id
 
     for i, para in enumerate(doc.paragraphs):
         plain_text = para.text.strip()
@@ -126,8 +135,14 @@ def parse_and_store(docx_path):
             chapter_id += 1
             paragraph_id = 1
             chapter_title = plain_text
-            chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
-            session.add(chapter)
+            chapter = existing_chapters.get(chapter_title)
+            if not chapter:
+                chapter = Chapter(id=chapter_id, title=chapter_title, work_id=work.id)
+                session.add(chapter)
+                session.commit()
+                existing_chapters[chapter_title] = chapter
+            else:
+                chapter_id = chapter.id
             continue
 
         if has_footnotes:
@@ -137,26 +152,37 @@ def parse_and_store(docx_path):
             fn_matches = []
 
         passage_id = f"{work.id}.ch{chapter_id}.p{paragraph_id}"
-        passage = Passage(
-            id=passage_id,
-            chapter=chapter_id,
-            section=None,
-            paragraph=paragraph_id,
-            text=text,
-            translation="moore_aveling_1887",
-            work_id=work.id,
-        )
-        session.add(passage)
+        passage = session.get(Passage, passage_id)
+        if passage:
+            passage.text = text
+        else:
+            passage = Passage(
+                id=passage_id,
+                chapter=chapter_id,
+                section=None,
+                paragraph=paragraph_id,
+                text=text,
+                translation="moore_aveling_1887",
+                work_id=work.id,
+            )
+            session.add(passage)
 
         # Add footnotes (if any)
         for fn_id in fn_matches:
-            session.add(
-                Footnote(
-                    passage_id=passage_id,
-                    footnote_number=fn_id,
-                    content=footnotes.get(fn_id, "")
+            existing_fn = session.query(Footnote).filter_by(
+                passage_id=passage_id,
+                footnote_number=fn_id
+            ).first()
+            if existing_fn:
+                existing_fn.content = footnotes.get(fn_id, "")
+            else:
+                session.add(
+                    Footnote(
+                        passage_id=passage_id,
+                        footnote_number=fn_id,
+                        content=footnotes.get(fn_id, "")
+                    )
                 )
-            )
 
         paragraph_id += 1
 
