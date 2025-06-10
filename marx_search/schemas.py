@@ -105,6 +105,22 @@ class PartOut(BaseModel):
         from_attributes = True
 
 
+class SectionMeta(BaseModel):
+    """Minimal section info for the table of contents."""
+
+    section: int
+    title: str
+
+
+class ChapterTOC(BaseModel):
+    """Chapter info with optional part data and section list."""
+
+    id: int
+    title: str
+    sections: list[SectionMeta]
+    part: PartInfo | None = None
+
+
 class WorkOut(BaseModel):
     id: int
     title: str

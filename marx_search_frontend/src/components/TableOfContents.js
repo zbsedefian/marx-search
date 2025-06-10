@@ -2,27 +2,41 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function TableOfContents({ workId }) {
-  const [parts, setParts] = useState([]);
+  const [chapters, setChapters] = useState([]);
 
   useEffect(() => {
-    const url = new URL("http://localhost:8000/parts_with_chapters_sections");
+    const url = new URL("http://localhost:8000/chapters_with_sections");
     if (workId) {
       url.searchParams.set("work_id", workId);
     }
     fetch(url)
       .then((res) => res.json())
-      .then(setParts);
+      .then(setChapters);
   }, [workId]);
+
+  const grouped = chapters.reduce((acc, ch) => {
+    const key = ch.part ? ch.part.number : "nopart";
+    if (!acc[key]) {
+      acc[key] = { part: ch.part, chapters: [] };
+    }
+    acc[key].chapters.push(ch);
+    return acc;
+  }, {});
 
   return (
     <div>
-      {parts.map((part) => (
-        <div key={part.number} className="mb-10">
-          <h2 className="text-2xl font-semibold mb-3">
-            Part {part.number}: {part.title}
-          </h2>
+      {Object.values(grouped).map((group, idx) => (
+        <div
+          key={group.part ? group.part.number : `no-part-${idx}`}
+          className="mb-10"
+        >
+          {group.part && (
+            <h2 className="text-2xl font-semibold mb-3">
+              Part {group.part.number}: {group.part.title}
+            </h2>
+          )}
           <ul className="space-y-6 ml-4">
-            {part.chapters.map((ch) => (
+            {group.chapters.map((ch) => (
               <li key={ch.id}>
                 <Link
                   to={`/read/${workId || 1}/${ch.id}`}
@@ -35,9 +49,7 @@ export default function TableOfContents({ workId }) {
                     {ch.sections.map((sec) => (
                       <li key={sec.section}>
                         <Link
-                          to={`/read/${workId || 1}/${ch.id}#section-${
-                            sec.section
-                          }`}
+                          to={`/read/${workId || 1}/${ch.id}#section-${sec.section}`}
                           className="hover:underline"
                         >
                           Section {sec.section}: {sec.title}

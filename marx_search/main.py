@@ -356,6 +356,51 @@ def get_parts_with_chapters_sections(
     return result
 
 
+@app.get("/chapters_with_sections", response_model=list[schemas.ChapterTOC])
+def get_chapters_with_sections(
+    work_id: int | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Return chapters with their sections and optional part info."""
+
+    chapters_query = db.query(models.Chapter)
+    if work_id is not None:
+        chapters_query = chapters_query.filter(models.Chapter.work_id == work_id)
+    chapters = chapters_query.order_by(models.Chapter.id).all()
+
+    sections_query = db.query(models.Section)
+    if work_id is not None:
+        sections_query = sections_query.filter(models.Section.work_id == work_id)
+    sections = sections_query.all()
+
+    parts = db.query(models.Part).order_by(models.Part.number).all()
+
+    section_map: dict[int, list[dict[str, int | str]]] = {}
+    for sec in sections:
+        section_map.setdefault(sec.chapter, []).append(
+            {"section": sec.section, "title": sec.title}
+        )
+
+    def part_for(chapter_id: int):
+        for p in parts:
+            if p.start_chapter <= chapter_id <= p.end_chapter:
+                return {"number": p.number, "title": p.title}
+        return None
+
+    result = []
+    for ch in chapters:
+        result.append(
+            {
+                "id": ch.id,
+                "title": ch.title,
+                "sections": section_map.get(ch.id, []),
+                "part": part_for(ch.id),
+            }
+        )
+
+    return result
+
+
 def extract_context_snippet(text, term, context_words=40):
     if not text:
         return ""
