@@ -75,6 +75,7 @@ def get_term_links(
             models.Passage.paragraph,
             models.Passage.text,
             models.Chapter.title.label("chapter_title"),
+            models.Chapter.chapter_number.label("chapter_number"),
             models.Section.title.label("section_title"),
         )
         .join(models.Passage, models.Passage.id == models.TermPassageLink.passage_id)
@@ -98,6 +99,7 @@ def get_term_links(
             "paragraph": row.paragraph,
             "text_snippet": extract_context_snippet(row.text, term_id),
             "chapter_title": row.chapter_title,
+            "chapter_number": row.chapter_number if hasattr(row, "chapter_number") else None,
             "section_title": row.section_title,
             "work_id": row.work_id
         })
@@ -204,6 +206,7 @@ def get_chapter_data(
 
     return {
         "title": chapter.title,
+        "chapter_number": chapter.chapter_number,
         "passages": passages,
         "sections": sections,
         "terms": terms,
@@ -213,11 +216,13 @@ def get_chapter_data(
         } if part else None,
         "prev_chapter": {
             "id": prev_chapter.id,
+            "chapter_number": prev_chapter.chapter_number,
             "title": prev_chapter.title,
             "work_id": prev_chapter.work_id
         } if prev_chapter else None,
         "next_chapter": {
             "id": next_chapter.id,
+            "chapter_number": next_chapter.chapter_number,
             "title": next_chapter.title,
             "work_id": next_chapter.work_id
         } if next_chapter else None
@@ -295,6 +300,7 @@ def search(
             "text_snippet": extract_context_snippet(p.text, q),
             "translation": p.translation,
             "chapter_title": chapter.title if chapter else None,
+            "chapter_number": chapter.chapter_number if chapter else None,
             "section_title": section.title if section else None,
             "work_id": p.work_id,
         })
@@ -340,6 +346,7 @@ def get_parts_with_chapters_sections(
             {
                 "id": ch.id,
                 "title": ch.title,
+                "chapter_number": ch.chapter_number,
                 "sections": section_map.get(ch.id, [])
             }
             for ch in chapters
@@ -393,6 +400,7 @@ def get_chapters_with_sections(
             {
                 "id": ch.id,
                 "title": ch.title,
+                "chapter_number": ch.chapter_number,
                 "sections": section_map.get(ch.id, []),
                 "part": part_for(ch.id),
             }
