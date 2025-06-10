@@ -1,5 +1,6 @@
 import { useLocation, Link, useSearchParams } from "react-router-dom";
 import React, { useEffect, useState, useContext } from "react";
+import API_BASE_URL from "../config";
 import PassageSnippet from "../components/PassageSnippet";
 import Pagination from "../components/Pagination";
 import { WorkContext } from "../work/WorkContext";
@@ -23,7 +24,7 @@ export default function SearchResults() {
       if (currentWorkId) {
         params.set("work_id", currentWorkId);
       }
-      fetch(`http://localhost:8000/search?${params.toString()}`)
+      fetch(`${API_BASE_URL}/search?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => {
           setResults(data);

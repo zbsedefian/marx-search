@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import API_BASE_URL from "../config";
 
 export default function TableOfContents({ workId }) {
   const [chapters, setChapters] = useState([]);
 
   useEffect(() => {
-    const url = new URL("http://localhost:8000/chapters_with_sections");
+    const url = new URL("/chapters_with_sections", API_BASE_URL);
     if (workId) {
       url.searchParams.set("work_id", workId);
     }

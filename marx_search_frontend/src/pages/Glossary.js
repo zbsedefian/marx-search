@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { WorkContext } from "../work/WorkContext";
+import API_BASE_URL from "../config";
 
 export default function Glossary() {
   const [terms, setTerms] = useState([]);
@@ -8,7 +9,7 @@ export default function Glossary() {
   const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
-    const url = new URL("http://localhost:8000/terms/");
+    const url = new URL("/terms/", API_BASE_URL);
     if (currentWorkId) {
       url.searchParams.set("work_id", currentWorkId);
     }

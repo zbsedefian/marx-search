@@ -1,4 +1,5 @@
 import React, { createContext, useEffect, useState } from "react";
+import API_BASE_URL from "../config";
 
 export const WorkContext = createContext();
 
@@ -10,7 +11,7 @@ export const WorkProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    fetch("http://localhost:8000/works/")
+    fetch(`${API_BASE_URL}/works/`)
       .then((res) => res.json())
       .then(setWorks);
   }, []);
