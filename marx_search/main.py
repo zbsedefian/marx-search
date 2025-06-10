@@ -17,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -45,6 +46,7 @@ def list_terms(work_id: int = Query(None), db: Session = Depends(get_db)):
         query = query.filter(models.Term.work_id == work_id)
     return query.all()
 
+
 @app.get("/terms/{term_id}", response_model=schemas.TermOut)
 def get_term(term_id: str, db: Session = Depends(get_db)):
     term = db.query(models.Term).filter(models.Term.id == term_id).first()
@@ -53,15 +55,16 @@ def get_term(term_id: str, db: Session = Depends(get_db)):
     return term
 
 
-
-
-@app.get("/terms/{term_id}/passages", response_model=list[schemas.TermPassageLinkOut])
+@app.get(
+    "/terms/{term_id}/passages",
+    response_model=list[schemas.TermPassageLinkOut],
+)
 def get_term_links(
     term_id: str,
     work_id: int = Query(None),
     db: Session = Depends(get_db),
     page: int = 1,
-    page_size: int = 10
+    page_size: int = 10,
 ):
     offset = (page - 1) * page_size
 
@@ -74,12 +77,20 @@ def get_term_links(
             models.Passage.section,
             models.Passage.paragraph,
             models.Passage.text,
+            models.Chapter.chapter_number.label("chapter_number"),
             models.Chapter.title.label("chapter_title"),
             models.Section.title.label("section_title"),
         )
-        .join(models.Passage, models.Passage.id == models.TermPassageLink.passage_id)
+        .join(
+            models.Passage,
+            models.Passage.id == models.TermPassageLink.passage_id,
+        )
         .join(models.Chapter, models.Chapter.id == models.Passage.chapter)
-        .outerjoin(models.Section, (models.Section.chapter == models.Passage.chapter) & (models.Section.section == models.Passage.section))
+        .outerjoin(
+            models.Section,
+            (models.Section.chapter == models.Passage.chapter)
+            & (models.Section.section == models.Passage.section),
+        )
         .filter(models.TermPassageLink.term_id == term_id)
     )
     if work_id is not None:
@@ -91,16 +102,18 @@ def get_term_links(
     for row in rows:
         if row.text is None:
             continue
-        results.append({
-            "id": row.id,
-            "chapter": row.chapter,
-            "section": row.section,
-            "paragraph": row.paragraph,
-            "text_snippet": extract_context_snippet(row.text, term_id),
-            "chapter_title": row.chapter_title,
-            "section_title": row.section_title,
-            "work_id": row.work_id
-        })
+        results.append(
+            {
+                "id": row.id,
+                "chapter": row.chapter_number,
+                "section": row.section,
+                "paragraph": row.paragraph,
+                "text_snippet": extract_context_snippet(row.text, term_id),
+                "chapter_title": row.chapter_title,
+                "section_title": row.section_title,
+                "work_id": row.work_id,
+            }
+        )
 
     return results
 
@@ -142,8 +155,12 @@ def extract_context_snippet(text, term, context_words=50):
 
 
 @app.get("/terms/{term_id}/passage_count")
-def count_term_links(term_id: str, work_id: int = Query(None), db: Session = Depends(get_db)):
-    query = db.query(models.TermPassageLink).filter(models.TermPassageLink.term_id == term_id)
+def count_term_links(
+    term_id: str, work_id: int = Query(None), db: Session = Depends(get_db)
+):
+    query = db.query(models.TermPassageLink).filter(
+        models.TermPassageLink.term_id == term_id
+    )
     if work_id is not None:
         query = query.filter(models.TermPassageLink.work_id == work_id)
     count = query.count()
@@ -155,78 +172,91 @@ def get_chapters(work_id: int = Query(None), db: Session = Depends(get_db)):
     query = db.query(models.Chapter)
     if work_id is not None:
         query = query.filter(models.Chapter.work_id == work_id)
-    return query.order_by(models.Chapter.id).all()
+    return query.order_by(models.Chapter.chapter_number).all()
 
 
-@app.get("/chapter_data/{chapter_id}", response_model=schemas.ChapterDataOut)
+@app.get(
+    "/chapter_data/{work_id}/{chapter_number}",
+    response_model=schemas.ChapterDataOut,
+)
 def get_chapter_data(
-    chapter_id: int,
-    work_id: int | None = Query(None),
-    db: Session = Depends(get_db)
+    work_id: int, chapter_number: int, db: Session = Depends(get_db)
 ):
-    chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id)
-    if work_id is not None:
-        chapter_query = chapter_query.filter(models.Chapter.work_id == work_id)
-    chapter = chapter_query.first()
+    chapter = (
+        db.query(models.Chapter)
+        .filter(
+            models.Chapter.work_id == work_id,
+            models.Chapter.chapter_number == chapter_number,
+        )
+        .first()
+    )
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
 
-    passages = db.query(models.Passage).filter(models.Passage.chapter == chapter_id)
-    if work_id is not None:
-        passages = passages.filter(models.Passage.work_id == work_id)
+    passages = db.query(models.Passage).filter(
+        models.Passage.chapter == chapter.id
+    )
     passages = passages.all()
 
-    sections = db.query(models.Section).filter(models.Section.chapter == chapter_id)
-    if work_id is not None:
-        sections = sections.filter(models.Section.work_id == work_id)
+    sections = db.query(models.Section).filter(
+        models.Section.chapter == chapter.id
+    )
     sections = sections.all()
 
-    terms = db.query(models.Term)
-    if work_id is not None:
-        terms = terms.filter(models.Term.work_id == work_id)
-    terms = terms.all()
+    terms = db.query(models.Term).filter(models.Term.work_id == work_id).all()
 
     # Get current part (find the highest start_chapter <= current chapter)
     part = (
         db.query(models.Part)
-        .filter(models.Part.start_chapter <= chapter_id)
+        .filter(models.Part.start_chapter <= chapter.id)
         .order_by(models.Part.start_chapter.desc())
         .first()
     )
 
-    prev_chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id - 1)
-    next_chapter_query = db.query(models.Chapter).filter(models.Chapter.id == chapter_id + 1)
-    if work_id is not None:
-        prev_chapter_query = prev_chapter_query.filter(models.Chapter.work_id == work_id)
-        next_chapter_query = next_chapter_query.filter(models.Chapter.work_id == work_id)
-    prev_chapter = prev_chapter_query.first()
-    next_chapter = next_chapter_query.first()
+    prev_chapter = (
+        db.query(models.Chapter)
+        .filter(
+            models.Chapter.work_id == work_id,
+            models.Chapter.chapter_number == chapter_number - 1,
+        )
+        .first()
+    )
+    next_chapter = (
+        db.query(models.Chapter)
+        .filter(
+            models.Chapter.work_id == work_id,
+            models.Chapter.chapter_number == chapter_number + 1,
+        )
+        .first()
+    )
 
     return {
         "title": chapter.title,
         "passages": passages,
         "sections": sections,
         "terms": terms,
-        "part": {
-            "number": part.number,
-            "title": part.title
-        } if part else None,
-        "prev_chapter": {
-            "id": prev_chapter.id,
-            "title": prev_chapter.title,
-            "work_id": prev_chapter.work_id
-        } if prev_chapter else None,
-        "next_chapter": {
-            "id": next_chapter.id,
-            "title": next_chapter.title,
-            "work_id": next_chapter.work_id
-        } if next_chapter else None
+        "part": {"number": part.number, "title": part.title} if part else None,
+        "prev_chapter": (
+            {
+                "id": prev_chapter.id,
+                "title": prev_chapter.title,
+                "work_id": prev_chapter.work_id,
+                "chapter_number": prev_chapter.chapter_number,
+            }
+            if prev_chapter
+            else None
+        ),
+        "next_chapter": (
+            {
+                "id": next_chapter.id,
+                "title": next_chapter.title,
+                "work_id": next_chapter.work_id,
+                "chapter_number": next_chapter.chapter_number,
+            }
+            if next_chapter
+            else None
+        ),
     }
-
-
-
-
-
 
 
 @app.get("/search", response_model=schemas.SearchResults)
@@ -255,8 +285,10 @@ def search(
         ]
     else:
         matching_terms = [
-            term for term in all_terms
-            if contains_word(term.term, q_lower) or fuzz.token_set_ratio(q_lower, term.term.lower()) > 90
+            term
+            for term in all_terms
+            if contains_word(term.term, q_lower)
+            or fuzz.token_set_ratio(q_lower, term.term.lower()) > 90
         ]
     matching_terms = matching_terms[:10]
 
@@ -274,7 +306,9 @@ def search(
         ]
     else:
         matched_passages = [
-            p for p in all_passages if fuzz.partial_ratio(q_lower, (p.text or "").lower()) > 80
+            p
+            for p in all_passages
+            if fuzz.partial_ratio(q_lower, (p.text or "").lower()) > 80
         ]
 
     # Paginate
@@ -285,19 +319,25 @@ def search(
     enriched_passages = []
     for p in paginated_passages:
         chapter = db.query(models.Chapter).filter_by(id=p.chapter).first()
-        section = db.query(models.Section).filter_by(chapter=p.chapter, section=p.section).first()
-        enriched_passages.append({
-            "id": p.id,
-            "chapter": p.chapter,
-            "section": p.section,
-            "paragraph": p.paragraph,
-            "text": p.text,
-            "text_snippet": extract_context_snippet(p.text, q),
-            "translation": p.translation,
-            "chapter_title": chapter.title if chapter else None,
-            "section_title": section.title if section else None,
-            "work_id": p.work_id,
-        })
+        section = (
+            db.query(models.Section)
+            .filter_by(chapter=p.chapter, section=p.section)
+            .first()
+        )
+        enriched_passages.append(
+            {
+                "id": p.id,
+                "chapter": chapter.chapter_number if chapter else p.chapter,
+                "section": p.section,
+                "paragraph": p.paragraph,
+                "text": p.text,
+                "text_snippet": extract_context_snippet(p.text, q),
+                "translation": p.translation,
+                "chapter_title": chapter.title if chapter else None,
+                "section_title": section.title if section else None,
+                "work_id": p.work_id,
+            }
+        )
 
     return {
         "query": q,
@@ -308,6 +348,7 @@ def search(
         "page_size": page_size,
     }
 
+
 @app.get("/parts_with_chapters_sections")
 def get_parts_with_chapters_sections(
     work_id: int | None = Query(None),
@@ -317,21 +358,24 @@ def get_parts_with_chapters_sections(
 
     chapters_query = db.query(models.Chapter)
     if work_id is not None:
-        chapters_query = chapters_query.filter(models.Chapter.work_id == work_id)
-    chapters = chapters_query.order_by(models.Chapter.id).all()
+        chapters_query = chapters_query.filter(
+            models.Chapter.work_id == work_id
+        )
+    chapters = chapters_query.order_by(models.Chapter.chapter_number).all()
 
     sections_query = db.query(models.Section)
     if work_id is not None:
-        sections_query = sections_query.filter(models.Section.work_id == work_id)
+        sections_query = sections_query.filter(
+            models.Section.work_id == work_id
+        )
     sections = sections_query.all()
 
     # Map sections to chapters
     section_map = {}
     for sec in sections:
-        section_map.setdefault(sec.chapter, []).append({
-            "section": sec.section,
-            "title": sec.title
-        })
+        section_map.setdefault(sec.chapter, []).append(
+            {"section": sec.section, "title": sec.title}
+        )
 
     # Group chapters by part
     result = []
@@ -339,19 +383,22 @@ def get_parts_with_chapters_sections(
         part_chapters = [
             {
                 "id": ch.id,
+                "chapter_number": ch.chapter_number,
                 "title": ch.title,
-                "sections": section_map.get(ch.id, [])
+                "sections": section_map.get(ch.id, []),
             }
             for ch in chapters
             if part.start_chapter <= ch.id <= part.end_chapter
         ]
 
         if part_chapters:
-            result.append({
-                "number": part.number,
-                "title": part.title,
-                "chapters": part_chapters
-            })
+            result.append(
+                {
+                    "number": part.number,
+                    "title": part.title,
+                    "chapters": part_chapters,
+                }
+            )
 
     return result
 
@@ -365,12 +412,16 @@ def get_chapters_with_sections(
 
     chapters_query = db.query(models.Chapter)
     if work_id is not None:
-        chapters_query = chapters_query.filter(models.Chapter.work_id == work_id)
+        chapters_query = chapters_query.filter(
+            models.Chapter.work_id == work_id
+        )
     chapters = chapters_query.order_by(models.Chapter.id).all()
 
     sections_query = db.query(models.Section)
     if work_id is not None:
-        sections_query = sections_query.filter(models.Section.work_id == work_id)
+        sections_query = sections_query.filter(
+            models.Section.work_id == work_id
+        )
     sections = sections_query.all()
 
     parts = db.query(models.Part).order_by(models.Part.number).all()
@@ -392,6 +443,7 @@ def get_chapters_with_sections(
         result.append(
             {
                 "id": ch.id,
+                "chapter_number": ch.chapter_number,
                 "title": ch.title,
                 "sections": section_map.get(ch.id, []),
                 "part": part_for(ch.id),
@@ -412,8 +464,11 @@ def extract_context_snippet(text, term, context_words=40):
             start = max(i - context_words, 0)
             end = min(i + context_words, len(words))
             return " ".join(words[start:end])
-    return " ".join(words[:context_words * 2])
+    return " ".join(words[: context_words * 2])
+
 
 def contains_word(term_text: str, query: str) -> bool:
     """Return True if `query` is a whole word in `term_text`."""
-    return re.search(rf"\b{re.escape(query)}\b", term_text, flags=re.IGNORECASE)
+    return re.search(
+        rf"\b{re.escape(query)}\b", term_text, flags=re.IGNORECASE
+    )

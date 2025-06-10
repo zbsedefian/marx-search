@@ -4,7 +4,7 @@ import DarkModeToggleFloating from "../darkmode/DarkModeToggleFloating";
 import { WorkContext } from "../work/WorkContext";
 
 export default function Reader() {
-  const { workId, chapterId } = useParams();
+  const { workId, chapterNumber } = useParams();
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
 
@@ -21,8 +21,9 @@ export default function Reader() {
 
   useEffect(() => {
     setCurrentWorkId(parseInt(workId, 10));
-    const chapterUrl = new URL(`http://localhost:8000/chapter_data/${parseInt(chapterId, 10)}`);
-    chapterUrl.searchParams.set("work_id", workId);
+    const chapterUrl = new URL(
+      `http://localhost:8000/chapter_data/${workId}/${parseInt(chapterNumber, 10)}`
+    );
     fetch(chapterUrl)
       .then((res) => res.json())
       .then((data) => {
@@ -39,7 +40,7 @@ export default function Reader() {
     fetch(chaptersUrl)
       .then((res) => res.json())
       .then(setAllChapters);
-  }, [workId, chapterId]);
+  }, [workId, chapterNumber]);
 
   useEffect(() => {
     if (highlightId) {
@@ -158,12 +159,12 @@ export default function Reader() {
 
         <div className="flex justify-between items-center flex-wrap gap-3 mb-3">
           <h1 className="text-3xl font-bold">
-            Chapter {parseInt(chapterId, 10)}: {chapterTitle}
+            Chapter {parseInt(chapterNumber, 10)}: {chapterTitle}
           </h1>
           <div className="flex gap-4 text-sm flex-wrap">
             {prevChapter && (
               <Link
-                to={`/read/${prevChapter.work_id}/${prevChapter.id}`}
+                to={`/read/${prevChapter.work_id}/${prevChapter.chapter_number}`}
                 className="text-blue-600 hover:underline"
               >
                 ← {prevChapter.title}
@@ -171,7 +172,7 @@ export default function Reader() {
             )}
             {nextChapter && (
               <Link
-                to={`/read/${nextChapter.work_id}/${nextChapter.id}`}
+                to={`/read/${nextChapter.work_id}/${nextChapter.chapter_number}`}
                 className="text-blue-600 hover:underline"
               >
                 {nextChapter.title} →
@@ -212,7 +213,7 @@ export default function Reader() {
         <div className="flex justify-between items-center border-t pt-4 mt-8 text-sm">
           {prevChapter ? (
             <Link
-              to={`/read/${prevChapter.work_id}/${prevChapter.id}`}
+              to={`/read/${prevChapter.work_id}/${prevChapter.chapter_number}`}
               className="text-blue-600 hover:underline"
             >
               ← {prevChapter.title}
@@ -222,7 +223,7 @@ export default function Reader() {
           )}
           {nextChapter && (
             <Link
-              to={`/read/${nextChapter.work_id}/${nextChapter.id}`}
+              to={`/read/${nextChapter.work_id}/${nextChapter.chapter_number}`}
               className="text-blue-600 hover:underline"
             >
               {nextChapter.title} →
@@ -257,11 +258,11 @@ export default function Reader() {
             {allChapters.map((ch) => (
               <li key={ch.id}>
                 <Link
-                  to={`/read/${workId}/${ch.id}`}
+                  to={`/read/${workId}/${ch.chapter_number}`}
                   className="text-blue-600 hover:underline"
                   onClick={() => setShowChapterMenu(false)}
                 >
-                  Chapter {ch.id}: {ch.title}
+                  Chapter {ch.chapter_number}: {ch.title}
                 </Link>
               </li>
             ))}
