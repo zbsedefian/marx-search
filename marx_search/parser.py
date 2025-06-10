@@ -40,35 +40,41 @@ def get_input_source():
         sys.exit(1)
 
 
-def extract_footnotes(docx_path):
-    """Return a mapping of footnote id -> text for the DOCX file."""
+def extract_notes(docx_path):
+    """Return a mapping of note id -> text for footnotes or endnotes."""
     with zipfile.ZipFile(docx_path) as z:
+        xml_part = None
+        note_tag = None
         try:
-            footnote_xml = z.read("word/footnotes.xml")
+            xml_part = z.read("word/footnotes.xml")
+            note_tag = "footnote"
         except KeyError:
-            # DOCX has no footnotes part
-            return {}
-        footnotes_root = etree.fromstring(footnote_xml)
+            try:
+                xml_part = z.read("word/endnotes.xml")
+                note_tag = "endnote"
+            except KeyError:
+                return {}
 
+    notes_root = etree.fromstring(xml_part)
     namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-    footnotes = {}
-    for fn in footnotes_root.findall("w:footnote", namespaces):
+    notes = {}
+    for fn in notes_root.findall(f"w:{note_tag}", namespaces):
         fn_id = fn.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
-        if fn_id in ("-1", "0"):  # Skip separators
+        if fn_id in ("-1", "0"):
             continue
         paragraphs = fn.findall(".//w:p", namespaces)
         text = " ".join("".join(node.text for node in p.iter() if node.text) for p in paragraphs)
-        footnotes[fn_id] = text.strip()
-    return footnotes
+        notes[fn_id] = text.strip()
+    return notes
 
 
 def paragraph_text_with_refs(para):
-    """Return text of paragraph with footnote markers and list of referenced ids."""
+    """Return paragraph text with <sup> markers for footnote/endnote references."""
     refs = []
     parts = []
     for node in para._element.iter():
         local = etree.QName(node).localname
-        if local == "footnoteReference":
+        if local in {"footnoteReference", "endnoteReference"}:
             fn_id = node.get(qn("w:id"))
             if fn_id:
                 parts.append(f"<sup>{fn_id}</sup>")
@@ -85,7 +91,7 @@ def paragraph_text_with_refs(para):
 
 def parse_and_store(docx_path):
     doc = Document(docx_path)
-    footnotes = extract_footnotes(docx_path)
+    footnotes = extract_notes(docx_path)
     has_footnotes = bool(footnotes)
 
     title = input("📘 Title of the work: ").strip()
