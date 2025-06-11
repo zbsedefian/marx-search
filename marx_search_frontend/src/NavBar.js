@@ -12,9 +12,9 @@ export default function Navbar() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
-      const encodedQuery = encodeURIComponent(query.trim());
+      // const encodedQuery = encodeURIComponent(query.trim());
       const searchParams = new URLSearchParams();
-      searchParams.set("q", encodedQuery);
+      searchParams.set("q", query.trim());
       if (exactMatch) {
         searchParams.set("exact", "true");
       }

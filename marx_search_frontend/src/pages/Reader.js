@@ -18,7 +18,10 @@ export default function Reader() {
   const [nextChapter, setNextChapter] = useState(null);
   const [allChapters, setAllChapters] = useState([]);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
-  const { currentWorkId, setCurrentWorkId } = useContext(WorkContext);
+  const { works, currentWorkId, setCurrentWorkId } = useContext(WorkContext);
+  const currentWorkTitle = works.find(
+    (item) => item.id === currentWorkId
+  )?.title;
 
   useEffect(() => {
     setCurrentWorkId(parseInt(workId, 10));
@@ -121,7 +124,7 @@ export default function Reader() {
   return (
     <div className="min-h-screen flex gap-6 p-6 font-serif bg-[#fceedd] text-black dark:bg-[#1e1e1e] dark:text-gray-100 transition-colors duration-300">
       {/* Sidebar */}
-      <aside className="w-56 sticky top-6 h-fit bg-[#fff9f3] dark:bg-[#2a2a2a] border dark:border-gray-700 p-4 rounded shadow text-sm">
+      <aside className="hidden md:block w-56 sticky top-6 h-fit bg-[#fff9f3] dark:bg-[#2a2a2a] border dark:border-gray-700 p-4 rounded shadow text-sm">
         {hasNamedSections ? (
           <>
             <h2 className="font-semibold mb-2 text-gray-800 dark:text-gray-200">
@@ -153,6 +156,11 @@ export default function Reader() {
 
       {/* Main content */}
       <div className="flex-1 space-y-5">
+        {workId && (
+          <div className="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+            {currentWorkTitle}
+          </div>
+        )}
         {part && (
           <div className="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
             Part {part.number}: {part.title}
@@ -160,9 +168,7 @@ export default function Reader() {
         )}
 
         <div className="flex justify-between items-center flex-wrap gap-3 mb-3">
-          <h1 className="text-3xl font-bold">
-            Chapter {parseInt(chapterNumber, 10)}: {chapterTitle}
-          </h1>
+          <h1 className="text-3xl font-bold">{chapterTitle}</h1>
           <div className="flex gap-4 text-sm flex-wrap">
             {prevChapter && (
               <Link
@@ -206,7 +212,7 @@ export default function Reader() {
                     : null}
                 </div>
               )}
-              <div>{linkifyTerms(renderSuperscripts(p.text), terms)}</div>
+              <div>{linkifyTerms(p.text, terms)}</div>
             </div>
           );
         })}
@@ -264,7 +270,7 @@ export default function Reader() {
                   className="text-blue-600 hover:underline"
                   onClick={() => setShowChapterMenu(false)}
                 >
-                  Chapter {ch.chapter_number}: {ch.title}
+                  {ch.title}
                 </Link>
               </li>
             ))}

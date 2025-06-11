@@ -31,15 +31,17 @@ export default function PassageSnippet({ passage, term }) {
     >
       {/* Chapter title */}
       <div className="text-md font-semibold mb-1">
+        {work && (
+          <span className="ml-1 text-gray-600 dark:text-gray-400">
+            {work.title} - {}
+          </span>
+        )}
         <Link
           to={`/read/${passage.work_id}/${passage.chapter}`}
           className="text-blue-600 hover:underline"
         >
-          Chapter {passage.chapter}: {passage.chapter_title}
+          {passage.chapter_title}
         </Link>
-        {work && (
-          <span className="ml-1 text-gray-600 dark:text-gray-400">– {work.title}</span>
-        )}
       </div>
 
       {/* Section title (optional) */}

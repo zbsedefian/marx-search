@@ -10,9 +10,9 @@ export default function Glossary() {
 
   useEffect(() => {
     const url = new URL("/terms/", API_BASE_URL);
-    if (currentWorkId) {
-      url.searchParams.set("work_id", currentWorkId);
-    }
+    // if (currentWorkId) {
+    //   url.searchParams.set("work_id", currentWorkId);
+    // }
     fetch(url)
       .then((res) => res.json())
       .then((data) => setTerms(data));

@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
-from marx_search.models import (
+from models import (
     Base,
     Work,
     Chapter,
@@ -18,7 +18,7 @@ from marx_search.models import (
     TermPassageLink,
     Part,
 )
-from marx_search.seed_parts import SECTIONS as PART_DEFS
+from seed_parts import SECTIONS as PART_DEFS
 
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
@@ -353,16 +353,16 @@ def links_capital_vol3(base: str) -> list[str]:
 
 if __name__ == "__main__":
     works = [
-        {
-            "url": "https://www.marxists.org/archive/marx/works/1875/gotha/",
-            "title": "Critique of the Gotha Program",
-            "author": "Karl Marx",
-        },
-        {
-            "url": "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/",
-            "title": "Manifesto of the Communist Party",
-            "author": "Karl Marx",
-        },
+        # {
+        #     "url": "https://www.marxists.org/archive/marx/works/1875/gotha/",
+        #     "title": "Critique of the Gotha Program",
+        #     "author": "Karl Marx",
+        # },
+        # {
+        #     "url": "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/",
+        #     "title": "Manifesto of the Communist Party",
+        #     "author": "Karl Marx",
+        # },
         {
             "url": "https://www.marxists.org/archive/marx/works/1885-c2/",
             "title": "Capital, Volume II",

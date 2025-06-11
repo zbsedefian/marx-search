@@ -208,7 +208,8 @@ def get_chapter_data(
     )
     sections = sections.all()
 
-    terms = db.query(models.Term).filter(models.Term.work_id == work_id).all()
+    terms = db.query(models.Term).all()
+    #     terms = db.query(models.Term).filter(models.Term.work_id == work_id).all()
 
     # Get current part (find the highest start_chapter <= current chapter)
     part = (

@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from marx_search.models import Part, Work, Chapter
+from models import Part, Work, Chapter
 
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
