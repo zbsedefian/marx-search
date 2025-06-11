@@ -30,6 +30,7 @@ def get_db():
 
 @app.get("/works/", response_model=list[schemas.WorkOut])
 def list_works(db: Session = Depends(get_db)):
+
     return db.query(models.Work).all()
 
 
