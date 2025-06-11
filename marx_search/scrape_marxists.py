@@ -18,7 +18,7 @@ from marx_search.models import (
     TermPassageLink,
     Part,
 )
-from marx_search.seed_parts import PARTS as PART_DEFS
+from marx_search.seed_parts import SECTIONS as PART_DEFS
 
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
@@ -85,8 +85,8 @@ def seed_terms(session, work: Work):
 
 
 def insert_parts(session, work: Work):
-    parts = PART_DEFS.get(work.title)
-    if not parts:
+    sections = PART_DEFS.get(work.title)
+    if not sections:
         return
     chapters = (
         session.query(Chapter)
@@ -95,7 +95,7 @@ def insert_parts(session, work: Work):
         .all()
     )
     num_to_id = {i + 1: ch.id for i, ch in enumerate(chapters)}
-    for number, title, start_num, end_num in parts:
+    for number, title, start_num, end_num in sections:
         start_id = num_to_id.get(start_num)
         end_id = num_to_id.get(end_num)
         if start_id is None or end_id is None:
@@ -219,7 +219,7 @@ def parse_page(
                 continue
             passage = Passage(
                 id=f"{work.id}.ch{chapter_id}.p{paragraph_id}",
-                chapter=chapter_id,
+                chapter=chapter_number,
                 section=current_section,
                 paragraph=paragraph_id,
                 text=text,
