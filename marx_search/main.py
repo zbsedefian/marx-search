@@ -3,8 +3,8 @@ from urllib.request import Request
 from fastapi import FastAPI, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-from marx_search.database import SessionLocal, engine
-from marx_search import models, schemas
+from database import SessionLocal, engine
+import models, schemas
 import re
 from rapidfuzz import process, fuzz
 
