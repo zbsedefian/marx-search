@@ -6,21 +6,27 @@ import TermDetail from "./pages/TermDetail";
 import WorksList from "./pages/WorksList";
 import WorkTableOfContents from "./pages/WorkTableOfContents";
 import NavBar from "./NavBar";
+import Footer from "./Footer";
 import SearchResults from "./pages/SearchResults";
 
 export default function App() {
   return (
     <Router>
-      <NavBar />
-      <Routes>
-        <Route path="/" element={<WorksList />} />
-        <Route path="/works/:workId" element={<WorkTableOfContents />} />
-        <Route path="/read/:workId/:chapterNumber" element={<Reader />} />
-        <Route path="/terms" element={<Glossary />} />
-        <Route path="/terms/:termId" element={<TermDetail />} />
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="*" element={<WorksList />} />
-      </Routes>
+      <div className="flex flex-col min-h-screen">
+        <NavBar />
+        <div className="flex-grow">
+          <Routes>
+            <Route path="/" element={<WorksList />} />
+            <Route path="/works/:workId" element={<WorkTableOfContents />} />
+            <Route path="/read/:workId/:chapterNumber" element={<Reader />} />
+            <Route path="/terms" element={<Glossary />} />
+            <Route path="/terms/:termId" element={<TermDetail />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="*" element={<WorksList />} />
+          </Routes>
+        </div>
+        <Footer />
+      </div>
     </Router>
   );
 }
