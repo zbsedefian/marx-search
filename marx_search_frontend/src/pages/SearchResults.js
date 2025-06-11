@@ -6,14 +6,16 @@ import Pagination from "../components/Pagination";
 import { WorkContext } from "../work/WorkContext";
 
 export default function SearchResults() {
-  const query = new URLSearchParams(useLocation().search).get("q") || "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("q") || "";
+  const exact = searchParams.get("exact") === "true";
+  const page = parseInt(searchParams.get("page")) || 1;
+  const pageSize = parseInt(searchParams.get("page_size")) || 10;
+
+  const { currentWorkId } = useContext(WorkContext);
+
   const [results, setResults] = useState(null);
   const [total, setTotal] = useState(0);
-
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = parseInt(searchParams.get("page")) || 1;
-  const pageSize = parseInt(searchParams.get("pageSize")) || 10;
-  const { currentWorkId } = useContext(WorkContext);
 
   useEffect(() => {
     if (query) {
@@ -21,9 +23,14 @@ export default function SearchResults() {
       params.set("q", query);
       params.set("page", page);
       params.set("page_size", pageSize);
-      if (currentWorkId) {
-        params.set("work_id", currentWorkId);
+      if (exact) {
+        params.set("exact", "true");
       }
+      // This filters on the top bar dropdown.
+      // if (currentWorkId) {
+      //   params.set("work_id", currentWorkId);
+      // }
+
       fetch(`${API_BASE_URL}/search?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => {
@@ -31,11 +38,7 @@ export default function SearchResults() {
           setTotal(data.total_passages || 0);
         });
     }
-  }, [query, page, pageSize, currentWorkId]);
-
-  if (!results) {
-    return <div className="p-6">Searching for “{query}”...</div>;
-  }
+  }, [query, exact, page, pageSize, currentWorkId]);
 
   if (!query) {
     return <div className="p-6">Please enter a search query.</div>;
@@ -48,7 +51,7 @@ export default function SearchResults() {
   return (
     <div className="p-6 bg-[#fceedd] dark:bg-[#1e1e1e] min-h-screen text-gray-800 dark:text-gray-200 font-serif">
       <h1 className="text-2xl font-bold mb-4">Search Results for “{query}”</h1>
-
+      {/* 
       {results?.terms?.length > 0 && (
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Matching Terms</h2>
@@ -69,14 +72,17 @@ export default function SearchResults() {
             ))}
           </ul>
         </div>
-      )}
+      )} */}
 
       {results?.passages?.length > 0 && (
         <div>
           <ul className="space-y-4 list-none p-0">
-            {" "}
             {results.passages.map((p) => (
-              <PassageSnippet key={p.id} passage={p} term={query} />
+              <PassageSnippet
+                key={p.id}
+                passage={p}
+                term={query}
+              />
             ))}
           </ul>
         </div>
@@ -88,6 +94,7 @@ export default function SearchResults() {
         pageSize={pageSize}
         setSearchParams={setSearchParams}
       />
+
       {results?.terms?.length === 0 && results?.passages?.length === 0 && (
         <p className="italic text-gray-600">No results found.</p>
       )}

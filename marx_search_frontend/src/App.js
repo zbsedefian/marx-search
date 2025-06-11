@@ -7,6 +7,8 @@ import WorksList from "./pages/WorksList";
 import WorkTableOfContents from "./pages/WorkTableOfContents";
 import NavBar from "./NavBar";
 import SearchResults from "./pages/SearchResults";
+import ThankYou from "./components/ThankYou";
+import Footer from "./components/Footer";
 
 export default function App() {
   return (
@@ -19,8 +21,10 @@ export default function App() {
         <Route path="/terms" element={<Glossary />} />
         <Route path="/terms/:termId" element={<TermDetail />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="/thank-you" element={<ThankYou />} />
         <Route path="*" element={<WorksList />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }

@@ -1,8 +1,10 @@
+from urllib.request import Request
+
 from fastapi import FastAPI, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-from marx_search.database import SessionLocal, engine
-from marx_search import models, schemas
+from database import SessionLocal, engine
+import models, schemas
 import re
 from rapidfuzz import process, fuzz
 
@@ -274,6 +276,7 @@ def search(
     work_id: int = Query(None),
     db: Session = Depends(get_db),
 ):
+    print("Parsed exact:", exact)
     q_lower = q.lower()
     offset = (page - 1) * page_size
 
@@ -285,17 +288,13 @@ def search(
         term_query = term_query.filter(models.Term.work_id == work_id)
     all_terms = term_query.all()
 
-    if exact:
-        matching_terms = [
-            term for term in all_terms if q_lower in term.term.lower()
-        ]
-    else:
-        matching_terms = [
-            term
-            for term in all_terms
-            if contains_word(term.term, q_lower)
-            or fuzz.token_set_ratio(q_lower, term.term.lower()) > 90
-        ]
+    matching_terms = [
+        term
+        for term in all_terms
+        if contains_word(term.term, q_lower)
+           or fuzz.token_set_ratio(q_lower, term.term.lower()) > 90
+    ]
+
     matching_terms = matching_terms[:10]
 
     # -------------------------
@@ -307,8 +306,10 @@ def search(
     all_passages = passage_query.all()
 
     if exact:
+        pattern = re.compile(rf'\b{re.escape(q_lower)}\b', flags=re.IGNORECASE)
         matched_passages = [
-            p for p in all_passages if q_lower in (p.text or "").lower()
+            p for p in all_passages
+            if pattern.search(p.text or "")
         ]
     else:
         matched_passages = [

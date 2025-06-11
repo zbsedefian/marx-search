@@ -28,6 +28,7 @@ class PassageSearchOut(BaseModel):
     text_snippet: str
     chapter_title: str | None = None
     section_title: str | None = None
+    work_id: int
 
     class Config:
         from_attributes = True

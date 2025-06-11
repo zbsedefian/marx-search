@@ -67,7 +67,7 @@ export default function TermDetail() {
       <ul className="space-y-4 list-none p-0">
         {" "}
         {passages.map((p) => (
-          <PassageSnippet key={p.id} passage={p} term={term.term} />
+          <PassageSnippet key={p.id} passage={p} term={term.term} workid={p.work_id} />
         ))}
       </ul>
 

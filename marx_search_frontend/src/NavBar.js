@@ -12,13 +12,15 @@ export default function Navbar() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
-      // const encodedQuery = encodeURIComponent(query.trim());
       const searchParams = new URLSearchParams();
       searchParams.set("q", query.trim());
       if (exactMatch) {
         searchParams.set("exact", "true");
       }
-      navigate(`/search?${searchParams.toString()}`);
+      navigate({
+        pathname: "/search",
+        search: `?${searchParams.toString()}`,
+      });
       setQuery("");
     }
   };
@@ -26,11 +28,12 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between p-4 bg-[#fceedd] dark:bg-[#1e1e1e] shadow font-serif flex-wrap">
       {/* Logo / Title */}
-      <Link
-        to="/"
-        className="text-xl font-bold text-gray-800 dark:text-gray-100 mr-4"
-      >
-        Marx Search
+      <Link to="/" className="mr-4">
+        <img
+          src="/image/marxsearch-transparant.png"
+          alt="Marx Search Logo"
+          className="h-10 w-auto"
+        />
       </Link>
 
       {/* Navigation Links and Search */}

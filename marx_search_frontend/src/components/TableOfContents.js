@@ -57,7 +57,7 @@ export default function TableOfContents({ workId }) {
                             }#section-${sec.section}`}
                             className="hover:underline"
                           >
-                            Section {sec.section}: {sec.title}
+                            {sec.title}
                           </Link>
                         </li>
                       ))}
