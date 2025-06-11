@@ -8,10 +8,113 @@ from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
-from marx_search.models import Base, Work, Chapter, Section, Passage
+from marx_search.models import (
+    Base,
+    Work,
+    Chapter,
+    Section,
+    Passage,
+    Term,
+    TermPassageLink,
+    Part,
+)
+from marx_search.seed_parts import PARTS as PART_DEFS
 
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
+
+NEW_TERMS = {
+    "Capital, Volume II": [
+        "department I",
+        "department II",
+        "turnover time",
+        "circuit of capital",
+        "fixed capital",
+        "circulating capital",
+        "productive capital",
+        "money capital",
+        "annual turnover",
+    ],
+    "Capital, Volume III": [
+        "cost-price",
+        "price of production",
+        "average profit",
+        "commercial capital",
+        "money-dealing capital",
+        "interest",
+        "profit of enterprise",
+    ],
+}
+
+
+def extract_context_snippet(text: str, term: str, context_words: int = 40) -> str:
+    """Return a snippet of text around the first occurrence of `term`."""
+    if not text:
+        return ""
+    words = text.split()
+    pattern = re.compile(re.escape(term), re.IGNORECASE)
+    m = pattern.search(text)
+    if not m:
+        return " ".join(words[: context_words * 2])
+    start_word = len(text[: m.start()].split())
+    end_word = len(text[: m.end()].split())
+    start = max(start_word - context_words, 0)
+    end = min(end_word + context_words, len(words))
+    snippet = " ".join(words[start:end])
+    if end < len(words):
+        snippet += "…"
+    return snippet
+
+
+def seed_terms(session, work: Work):
+    """Insert predefined terms for the given work if they don't exist."""
+    terms = NEW_TERMS.get(work.title, [])
+    for term_text in terms:
+        term_id = term_text.lower().replace(" ", "-")
+        if session.get(Term, term_id):
+            continue
+        t = Term(
+            id=term_id,
+            term=term_text,
+            definition="",
+            tags="",
+            aliases=None,
+            work_id=work.id,
+        )
+        session.add(t)
+
+
+def insert_parts(session, work: Work):
+    parts = PART_DEFS.get(work.title)
+    if not parts:
+        return
+    chapters = (
+        session.query(Chapter)
+        .filter(Chapter.work_id == work.id)
+        .order_by(Chapter.id)
+        .all()
+    )
+    num_to_id = {i + 1: ch.id for i, ch in enumerate(chapters)}
+    for number, title, start_num, end_num in parts:
+        start_id = num_to_id.get(start_num)
+        end_id = num_to_id.get(end_num)
+        if start_id is None or end_id is None:
+            continue
+        exists = (
+            session.query(Part)
+            .filter(Part.start_chapter == start_id, Part.end_chapter == end_id)
+            .first()
+        )
+        if exists:
+            continue
+        session.add(
+            Part(
+                number=number,
+                title=title,
+                start_chapter=start_id,
+                end_chapter=end_id,
+            )
+        )
 
 
 def extract_year(text: str) -> str | None:
@@ -93,6 +196,8 @@ def parse_page(
     current_section = None
     section_count = 1
 
+    terms = session.query(Term).filter(Term.work_id == work.id).all()
+
     for element in soup.find_all(["h2", "h3", "p"]):
         if element.name in {"h2", "h3"}:
             if element == header:
@@ -123,6 +228,20 @@ def parse_page(
             )
             session.add(passage)
             counts["passages"] += 1
+            session.flush()
+
+            for term in terms:
+                if re.search(rf"\b{re.escape(term.term)}\b", text, re.IGNORECASE):
+                    snippet = extract_context_snippet(text, term.term)
+                    session.add(
+                        TermPassageLink(
+                            term_id=term.id,
+                            passage_id=passage.id,
+                            text_snippet=snippet,
+                            work_id=work.id,
+                        )
+                    )
+                    counts["links"] += 1
             paragraph_id += 1
 
 
@@ -145,6 +264,7 @@ def scrape_work(
         links = [u for u, _ in toc_links] or [index_url]
 
     work = get_or_create_work(session, title, author, year, description)
+    seed_terms(session, work)
 
     max_id = session.query(func.max(Chapter.id)).scalar() or 0
     next_id = max_id + 1
@@ -156,7 +276,7 @@ def scrape_work(
     )
     next_num = max_num + 1
 
-    counts = {"chapters": 0, "sections": 0, "passages": 0}
+    counts = {"chapters": 0, "sections": 0, "passages": 0, "links": 0}
     for link in links:
         try:
             parse_page(session, link, next_id, next_num, work, counts)
@@ -168,8 +288,10 @@ def scrape_work(
 
     print(
         f"Ready to insert {counts['chapters']} chapters, {counts['sections']} sections,"
-        f" {counts['passages']} passages for '{title}' ({year or 'unknown'})."
+        f" {counts['passages']} passages and {counts['links']} term links for '{title}'"
+        f" ({year or 'unknown'})."
     )
+    insert_parts(session, work)
     confirm = input("Commit to database? [y/N]: ").strip().lower()
     if confirm == "y":
         session.commit()
