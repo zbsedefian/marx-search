@@ -5,7 +5,7 @@ from marx_search.models import Part, Work, Chapter
 engine = create_engine("sqlite:///marx_texts.db")
 Session = sessionmaker(bind=engine)
 
-PARTS = {
+SECTIONS = {
     "Capital, Volume I": [
         (1, "Commodities and Money", 1, 3),
         (2, "Transformation of Money into Capital", 4, 6),
@@ -17,16 +17,16 @@ PARTS = {
         (8, "Primitive Accumulation", 26, 33),
     ],
     "Capital, Volume II": [
-        (1, "The Metamorphoses of Capital and Their Circuits", 1, 4),
-        (2, "The Turnover of Capital", 5, 15),
-        (3, "The Reproduction and Circulation of the Aggregate Social Capital", 16, 21),
+        (1, "The Metamorphoses of Capital and Their Circuits", 1, 6),
+        (2, "The Turnover of Capital", 7, 17),
+        (3, "The Reproduction and Circulation of the Aggregate Social Capital", 18, 21),
     ],
     "Capital, Volume III": [
         (1, "The Conversion of Surplus-Value into Profit", 1, 7),
         (2, "Transformation of Profit into Average Profit", 8, 12),
         (3, "The Law of the Tendency of the Rate of Profit to Fall", 13, 15),
-        (4, "Conversion of Commodity Capital and Money Capital into Commercial Capital and Money-Dealing Capital", 16, 22),
-        (5, "Division of Profit into Interest and Profit of Enterprise", 23, 36),
+        (4, "Conversion of Commodity Capital and Money Capital into Commercial Capital and Money-Dealing Capital", 16, 20),
+        (5, "Division of Profit into Interest and Profit of Enterprise", 21, 36),
         (6, "Transformation of Surplus-Profit into Ground-Rent", 37, 47),
         (7, "Revenues and Their Sources", 48, 52),
     ],
@@ -34,7 +34,7 @@ PARTS = {
 
 def main():
     with Session() as session:
-        for work_title, parts in PARTS.items():
+        for work_title, parts in SECTIONS.items():
             work = session.query(Work).filter(Work.title == work_title).first()
             if not work:
                 print(f"⚠️ Work '{work_title}' not found, skipping.")

@@ -85,10 +85,14 @@ def get_term_links(
             models.Passage,
             models.Passage.id == models.TermPassageLink.passage_id,
         )
-        .join(models.Chapter, models.Chapter.id == models.Passage.chapter)
+        .join(
+            models.Chapter,
+            (models.Chapter.chapter_number == models.Passage.chapter)
+            & (models.Chapter.work_id == models.Passage.work_id),
+        )
         .outerjoin(
             models.Section,
-            (models.Section.chapter == models.Passage.chapter)
+            (models.Section.chapter == models.Chapter.id)
             & (models.Section.section == models.Passage.section),
         )
         .filter(models.TermPassageLink.term_id == term_id)
@@ -194,7 +198,8 @@ def get_chapter_data(
         raise HTTPException(status_code=404, detail="Chapter not found")
 
     passages = db.query(models.Passage).filter(
-        models.Passage.chapter == chapter.id
+        models.Passage.chapter == chapter_number,
+        models.Passage.work_id == work_id,
     )
     passages = passages.all()
 
@@ -318,12 +323,18 @@ def search(
     # Enhance with snippet and titles
     enriched_passages = []
     for p in paginated_passages:
-        chapter = db.query(models.Chapter).filter_by(id=p.chapter).first()
-        section = (
-            db.query(models.Section)
-            .filter_by(chapter=p.chapter, section=p.section)
+        chapter = (
+            db.query(models.Chapter)
+            .filter_by(work_id=p.work_id, chapter_number=p.chapter)
             .first()
         )
+        section = None
+        if chapter:
+            section = (
+                db.query(models.Section)
+                .filter_by(chapter=chapter.id, section=p.section)
+                .first()
+            )
         enriched_passages.append(
             {
                 "id": p.id,
