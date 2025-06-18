@@ -27,9 +27,9 @@ export default function SearchResults() {
         params.set("exact", "true");
       }
       // This filters on the top bar dropdown.
-      // if (currentWorkId) {
-      //   params.set("work_id", currentWorkId);
-      // }
+      if (currentWorkId) {
+        params.set("work_id", currentWorkId);
+      }
 
       fetch(`${API_BASE_URL}/search?${params.toString()}`)
         .then((res) => res.json())
@@ -78,11 +78,7 @@ export default function SearchResults() {
         <div>
           <ul className="space-y-4 list-none p-0">
             {results.passages.map((p) => (
-              <PassageSnippet
-                key={p.id}
-                passage={p}
-                term={query}
-              />
+              <PassageSnippet key={p.id} passage={p} term={query} />
             ))}
           </ul>
         </div>
