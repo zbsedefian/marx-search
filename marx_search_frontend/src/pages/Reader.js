@@ -138,7 +138,7 @@ export default function Reader() {
                     className="text-blue-600 hover:underline"
                   >
                     {sec === "none"
-                      ? "Introduction"
+                      ? ""
                       : `Section ${sec}${
                           sectionTitleFor(sec)
                             ? ": " + sectionTitleFor(sec)
@@ -202,7 +202,7 @@ export default function Reader() {
                   className="scroll-mt-20 text-xl font-semibold mt-8 mb-2"
                 >
                   {currentSection === "none" && hasNamedSections
-                    ? "Introduction"
+                    ? ""
                     : currentSection !== "none"
                     ? `Section ${currentSection}${
                         sectionTitleFor(currentSection)

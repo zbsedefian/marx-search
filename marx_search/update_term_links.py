@@ -43,7 +43,7 @@ def main() -> None:
     session = SessionLocal()
     try:
         total_added = 0
-        for work_id in (4, 5):
+        for work_id in (6, 7, 8, 9, 10):
             added = update_links_for_work(session, work_id)
             print(f"Work {work_id}: added {added} links")
             total_added += added

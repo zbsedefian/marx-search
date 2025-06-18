@@ -353,16 +353,57 @@ def links_capital_vol3(base: str) -> list[str]:
 
 if __name__ == "__main__":
     works = [
-        {
-            "url": "https://www.marxists.org/archive/marx/works/1875/gotha/",
-            "title": "Critique of the Gotha Program",
-            "author": "Karl Marx",
-        },
-        {
-            "url": "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/",
-            "title": "Manifesto of the Communist Party",
-            "author": "Karl Marx",
-        },
+            {
+                "url": "https://www.marxists.org/archive/marx/works/1844/epm/index.htm",
+                "title": "Economic and Philosophic Manuscripts of 1844",
+                "author": "Karl Marx"
+            },
+            # {
+            #     "url": "https://www.marxists.org/archive/marx/works/1845/theses/theses.htm",
+            #     "title": "Theses on Feuerbach",
+            #     "author": "Karl Marx"
+            # },
+            {
+                "url": "https://www.marxists.org/archive/marx/works/1845/german-ideology/abstract.htm",
+                "title": "The German Ideology",
+                "author": "Karl Marx"
+            },
+            # {
+            #     "url": "https://www.marxists.org/archive/marx/works/1845/holy-family/",
+            #     "title": "The Holy Family",
+            #     "author": "Karl Marx"
+            # },
+            # {
+            #     "url": "https://www.marxists.org/archive/marx/works/1863/theories-surplus-value/",
+            #     "title": "Theories of Surplus-Value",
+            #     "author": "Karl Marx"
+            # },
+            {
+                "url": "https://www.marxists.org/archive/marx/works/1847/wage-labour/",
+                "title": "Wage Labour and Capital",
+                "author": "Karl Marx"
+            },
+            {
+                "url": "https://www.marxists.org/archive/marx/works/1847/poverty-philosophy/",
+                "title": "The Poverty of Philosophy",
+                "author": "Karl Marx"
+            },
+            {
+                "url": "https://www.marxists.org/archive/marx/works/1871/civil-war-france/",
+                "title": "The Civil War in France",
+                "author": "Karl Marx"
+            }
+
+        # {
+        #     "url": "https://www.marxists.org/archive/marx/works/1875/gotha/",
+        #     "title": "Critique of the Gotha Program",
+        #     "author": "Karl Marx",
+        # },
+        # {
+        #     "url": "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/",
+        #     "title": "Manifesto of the Communist Party",
+        #     "author": "Karl Marx",
+        # },
         # {
         #     "url": "https://www.marxists.org/archive/marx/works/1885-c2/",
         #     "title": "Capital, Volume II",
