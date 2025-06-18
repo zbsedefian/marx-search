@@ -9,13 +9,12 @@ from docx import Document
 from docx.oxml.ns import qn
 from sqlalchemy import create_engine, text, func
 from sqlalchemy.orm import sessionmaker
-from marx_search.models import (
+from models import (
     Base,
     Work,
     Chapter,
     Section,
     Passage,
-    Footnote,
 )  # Make sure Footnote is defined
 
 # Setup DB

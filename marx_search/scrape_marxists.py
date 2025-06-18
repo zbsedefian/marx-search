@@ -353,32 +353,32 @@ def links_capital_vol3(base: str) -> list[str]:
 
 if __name__ == "__main__":
     works = [
-        # {
-        #     "url": "https://www.marxists.org/archive/marx/works/1875/gotha/",
-        #     "title": "Critique of the Gotha Program",
-        #     "author": "Karl Marx",
-        # },
-        # {
-        #     "url": "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/",
-        #     "title": "Manifesto of the Communist Party",
-        #     "author": "Karl Marx",
-        # },
         {
-            "url": "https://www.marxists.org/archive/marx/works/1885-c2/",
-            "title": "Capital, Volume II",
+            "url": "https://www.marxists.org/archive/marx/works/1875/gotha/",
+            "title": "Critique of the Gotha Program",
             "author": "Karl Marx",
-            "links": links_capital_vol2(
-                "https://www.marxists.org/archive/marx/works/1885-c2/"
-            ),
         },
         {
-            "url": "https://www.marxists.org/archive/marx/works/1894-c3/",
-            "title": "Capital, Volume III",
+            "url": "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/",
+            "title": "Manifesto of the Communist Party",
             "author": "Karl Marx",
-            "links": links_capital_vol3(
-                "https://www.marxists.org/archive/marx/works/1894-c3/"
-            ),
         },
+        # {
+        #     "url": "https://www.marxists.org/archive/marx/works/1885-c2/",
+        #     "title": "Capital, Volume II",
+        #     "author": "Karl Marx",
+        #     "links": links_capital_vol2(
+        #         "https://www.marxists.org/archive/marx/works/1885-c2/"
+        #     ),
+        # },
+        # {
+        #     "url": "https://www.marxists.org/archive/marx/works/1894-c3/",
+        #     "title": "Capital, Volume III",
+        #     "author": "Karl Marx",
+        #     "links": links_capital_vol3(
+        #         "https://www.marxists.org/archive/marx/works/1894-c3/"
+        #     ),
+        # },
     ]
 
     for w in works:
